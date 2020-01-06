@@ -11,10 +11,16 @@ public class EntityManager {
 	private final BitVector recycled = new BitVector();
 	private final IntDeque limbo = new IntDeque();
 	private int nextId;
-	private Bag<BitVector> entityBitVectors = new Bag<BitVector>(BitVector.class);
+	private Bag<BitVector> entityBitVectorsStores = new Bag<BitVector>(BitVector.class);
 	
 	public EntityManager(int initialContainerSize) {
 		entities = new Bag<Entity>(initialContainerSize);
+		this.registerEntityStore(recycled);
+	}
+	
+	public void registerEntityStore(BitVector bv) {
+		bv.ensureCapacity(entities.getCapacity());
+		entityBitVectorsStores.add(bv);
 	}
 	
 	protected Entity createEntityInstance() {
@@ -43,7 +49,7 @@ public class EntityManager {
 		}
 	}
 	
-//	public boolean reset() {
+	public void reset() {
 //		int count = world.getAspectSubscriptionManager()
 //			.get(all())
 //			.getActiveEntityIds()
@@ -51,15 +57,14 @@ public class EntityManager {
 //
 //		if (count > 0)
 //			return false;
-//
-//		limbo.clear();
-//		recycled.clear();
-//		entities.clear();
-//
-//		nextId = 0;
-//
-//		return true;
-//	}
+
+		limbo.clear();
+		recycled.clear();
+		entities.clear();
+
+		nextId = 0;
+
+	}
 	
 	private Entity createEntity(int id) {
 		Entity e = new Entity(id);
@@ -85,8 +90,8 @@ public class EntityManager {
 //		ComponentManager cm = world.getComponentManager();
 //		cm.ensureCapacity(newSize);
 
-		for (int i = 0, s = entityBitVectors.size(); s > i; i++) {
-			entityBitVectors.get(i).ensureCapacity(newSize);
+		for (int i = 0, s = entityBitVectorsStores.size(); s > i; i++) {
+			entityBitVectorsStores.get(i).ensureCapacity(newSize);
 		}
 	}
 	
