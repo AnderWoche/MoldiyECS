@@ -18,7 +18,7 @@ public class BitVectorTest {
 		
 		BitVector vec2 = new BitVector();
 		vec2.unsafeSet(0);
-		vec2.unsafeSet(0);
+		vec2.unsafeSet(1);
 		vec2.unsafeSet(2);
 		vec2.unsafeSet(60);
 		int hash2 = vec2.hashCode();

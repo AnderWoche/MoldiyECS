@@ -2,9 +2,8 @@ package de.moldiy.moldiyecs.subscription;
 
 import java.util.Collection;
 
-import de.moldiy.moldiyecs.World;
-import de.moldiy.moldiyecs.componentManager.Component;
-import de.moldiy.moldiyecs.componentManager.ComponentIDFactory;
+import de.moldiy.moldiyecs.componentmanager.Component;
+import de.moldiy.moldiyecs.componentmanager.ComponentIDFactory;
 import de.moldiy.moldiyecs.utils.Bag;
 import de.moldiy.moldiyecs.utils.BitVector;
 
@@ -107,6 +106,25 @@ public class Aspect {
 		// Check if the entity possesses ANY of the components in the oneSet.
 		// If so, the system is interested.
 		if (!oneSet.isEmpty() && !oneSet.intersects(componentBits))
+			return false;
+
+		return true;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+
+		Aspect aspect = (Aspect) o;
+
+		if (!this.allSet.equals(aspect.allSet))
+			return false;
+		if (!this.exclusionSet.equals(aspect.exclusionSet))
+			return false;
+		if (!this.oneSet.equals(aspect.oneSet))
 			return false;
 
 		return true;
@@ -332,12 +350,11 @@ public class Aspect {
 		 * @param world
 		 * @return Instance of Aspect.
 		 */
-		public Aspect build(World world) {
-			ComponentIDFactory tf = world.getComponentManager().getComponentIDFactory();
+		public Aspect build(ComponentIDFactory componentIDFactory) {
 			Aspect aspect = new Aspect();
-			associate(tf, allTypes, aspect.allSet);
-			associate(tf, exclusionTypes, aspect.exclusionSet);
-			associate(tf, oneTypes, aspect.oneSet);
+			Builder.associate(componentIDFactory, this.allTypes, aspect.allSet);
+			Builder.associate(componentIDFactory, this.exclusionTypes, aspect.exclusionSet);
+			Builder.associate(componentIDFactory, this.oneTypes, aspect.oneSet);
 
 			return aspect;
 		}

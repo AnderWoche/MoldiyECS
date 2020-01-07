@@ -1,8 +1,10 @@
-package de.moldiy.moldiyecs.componentManager;
+package de.moldiy.moldiyecs.componentmanager;
 
 import java.lang.reflect.Modifier;
 import java.util.IdentityHashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import de.moldiy.moldiyecs.utils.reflect.ClassReflection;
 import de.moldiy.moldiyecs.utils.reflect.Constructor;
@@ -12,11 +14,17 @@ public class ComponentIDFactory {
 
 	private final IdentityHashMap<Class<? extends Component>, Integer> componentids = new IdentityHashMap<Class<? extends Component>, Integer>();
 
+	private Lock lock;
+
+	public ComponentIDFactory() {
+		this.lock = new ReentrantLock();
+	}
+
 	@SuppressWarnings("unchecked")
 	public Entry<Class<? extends Component>, Integer> getAllComponentIDs() {
 		return (Entry<Class<? extends Component>, Integer>) componentids.entrySet();
 	}
-	
+
 	public int getComponentIDFor(Class<? extends Component> c) {
 		Integer componentID = componentids.get(c);
 
@@ -28,6 +36,7 @@ public class ComponentIDFactory {
 	}
 
 	private int createComponentID(Class<? extends Component> c) {
+		lock.lock();
 		try {
 			Constructor ctor = ClassReflection.getConstructor(c);
 			if ((ctor.getModifiers() & Modifier.PUBLIC) == 0)
@@ -40,7 +49,8 @@ public class ComponentIDFactory {
 
 		this.componentids.put(c, componentID);
 
+		lock.unlock();
 		return componentID;
 	}
-	
+
 }

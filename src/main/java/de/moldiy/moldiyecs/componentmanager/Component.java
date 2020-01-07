@@ -1,4 +1,4 @@
-package de.moldiy.moldiyecs.componentManager;
+package de.moldiy.moldiyecs.componentmanager;
 
 import com.badlogic.gdx.utils.Pool.Poolable;
 
