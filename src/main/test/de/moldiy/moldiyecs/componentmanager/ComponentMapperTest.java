@@ -27,34 +27,36 @@ public class ComponentMapperTest {
 
 		executorService.execute(new Runnable() {
 			public void run() {
+				mapper.exclusiceAccess();
 				for (int i = 0; i < 200; i++) {
-//					mapper.lock();
+					
 					TransformComponenet transformComponenet = mapper.get(0);
 					System.out.println("Thread 1 x = " + transformComponenet.x);
 					transformComponenet.x += 1;
+					
 					try {
-						Thread.sleep(2000);
+						Thread.sleep(40);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-//					mapper.unlock();
 				}
+				mapper.publicAccess();
 			}
 		});
 		executorService.execute(new Runnable() {
 			public void run() {
 				for (int i = 0; i < 200; i++) {
-//					mapper.lock();
+					mapper.exclusiceAccess();
 					TransformComponenet transformComponenet = mapper.get(0);
 					System.out.println("Thread 2 x = " + transformComponenet.x);
 					transformComponenet.x = ++transformComponenet.x;
-//					mapper.unlock();
+					mapper.publicAccess();
 				}
 			}
 		});
 
 		try {
-			Thread.sleep(1_000);
+			Thread.sleep(10_000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

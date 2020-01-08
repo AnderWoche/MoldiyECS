@@ -1,5 +1,6 @@
 package de.moldiy.moldiyecs.componentmanager;
 
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -10,15 +11,24 @@ import de.moldiy.moldiyecs.utils.reflect.ClassReflection;
 import de.moldiy.moldiyecs.utils.reflect.ReflectionException;
 
 public class ComponentMapper<T extends Component> {
-
+	
+	private Class<T> componentClass;
+	
 	private final Bag<T> components;
 	private final Pool<T> componentPool;
 
-	private boolean isLocked;
+	private Thread exclusiceAccess = null;
 	private final Lock lock;
-	
+	private final Condition condition;
+
+	private final Bag<ComponentListener> componentListener = new Bag<ComponentMapper.ComponentListener>(
+			ComponentListener.class);
+
 	public ComponentMapper(final Class<T> componentClass) {
+		this.componentClass = componentClass;
 		components = new Bag<T>();
+		this.lock = new ReentrantLock();
+		this.condition = lock.newCondition();
 		this.componentPool = new Pool<T>() {
 			@Override
 			protected T newObject() {
@@ -30,49 +40,124 @@ public class ComponentMapper<T extends Component> {
 				return null;
 			}
 		};
-		this.lock = new ReentrantLock();
-
-	}
-
-	public T get(int entity) {
-		return this.components.get(entity);
 	}
 
 	/**
+	 * Don't forget after the exclusice operation unlock the public access.
+	 */
+	public void exclusiceAccess() {
+		if (this.exclusiceAccess == null) {
+			this.exclusiceAccess = Thread.currentThread();
+		} else {
+			this.lock.lock();
+			try {
+				this.condition.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.lock.unlock();
+		}
+	}
+
+	public void publicAccess() {
+		this.lock.lock();
+		this.exclusiceAccess = null;
+		this.condition.signalAll();
+		this.lock.unlock();
+	}
+
+	public T get(int entity) {
+		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
+			this.lock.lock();
+			try {
+				this.condition.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.lock.unlock();
+		}
+		return this.components.safeGet(entity);
+	}
+	
+	/**
+	 * GEHÖER NCIHT ZU MEHTODE NUT IDEE NOTOIZ
+	 * 
+	 * wen erkannt wird das an diesem mapper mehr als 2 Systeme Interesiert sind
+	 * wird automatisch sobal die methode REMOVE oder CREATE aufgerufen wird der mapper nur exclusive 
+	 * nur für diesen thread freigegeben ohne das der benutzer dieses Frame works was merkt. damit aber am ende
+	 * der mapper wieder für alle freigeschaltet wrid wird immer IMMER am system ende automatisch the PUBLICACCESS
+	 *  methode aufgerufen soweit ich weis goibt es keine exeption wenn man notifi aufruft obwohl niemand wartet.
 	 * 
 	 * @param entityID
 	 */
 	public void remove(int entityID) {
-		if (isLocked) {
+		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
 			this.lock.lock();
-			this.notThreadSafeRemove(entityID);
+			try {
+				this.condition.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			this.lock.unlock();
-		} else {
-			this.notThreadSafeRemove(entityID);
 		}
-	}
-
-	private void notThreadSafeRemove(int entityID) {
 		T component = this.get(entityID);
 		if (component != null) {
-			this.components.remove(entityID);
+			
+			
+			/** Delayed removable Implementation!!!!! JETZT ehmm nö!!.. 
+			*es egal wann die removed werden weil ja alles paralel ist
+			* Der sugrif auf mapper ist bei critischen sachen sowieso Sync!
+			* LÖSUNG: ein bitVecot der alle enitty markiert die verändert worden sind und befor ein system anfängt zu
+			* arbeiten und die mapper Synct werden die Subscriptions Aktualieiert mit den BitVEctor!?
+			*/
+			this.components.unsafeSet(entityID, null);
 			this.componentPool.free(component);
+			this.notifyComponentListener_EntityDeleted(entityID);
 		}
 
 	}
 
 	public T create(int entityID) {
+		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
+			this.lock.lock();
+			try {
+				this.condition.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.lock.unlock();
+		}
 		T component = this.get(entityID);
 		if (component == null) {
 			component = this.componentPool.obtain();
 			this.components.set(entityID, component);
+			this.notifyComponentListener_EntityAdded(entityID);
 		}
 		return component;
 	}
-	
+
+	public void addComponentListener(ComponentListener componentListener) {
+		this.componentListener.add(componentListener);
+	}
+
+	protected void notifyComponentListener_EntityDeleted(int entity) {
+		ComponentListener[] listneners = this.componentListener.getData();
+		for (int i = 0, s = this.componentListener.size(); i < s; i++) {
+			listneners[i].componentDeleteted(this.componentClass, entity);
+		}
+	}
+
+	protected void notifyComponentListener_EntityAdded(int entity) {
+		ComponentListener[] listneners = this.componentListener.getData();
+		for (int i = 0, s = this.componentListener.size(); i < s; i++) {
+			listneners[i].componentAdded(this.componentClass, entity);
+		}
+	}
+
 	public interface ComponentListener {
-		public void componentDeleteAfterThisMethod(int entity);
-		public void componentIsAddedToComponentMapper(int entity);
+		public void componentDeleteted(Class<? extends Component> component, int entity);
+
+		public void componentAdded(Class<? extends Component> component, int entity);
 	}
 
 }
