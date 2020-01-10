@@ -42,11 +42,20 @@ public class SystemManager {
 		this.addSystem(null, system);
 	}
 
+	/**
+	 * If you shose null for a group then is going to add the system to the main
+	 * loop or main thread.
+	 * 
+	 * @param <T>    class extends BaseSystem
+	 * @param group  The group the system will be processed. null is the main loop
+	 *               or main Thread.
+	 * @param system The system that will be added
+	 */
 	public <T extends BaseSystem> void addSystem(String group, T system) {
-//		if (!this.allSystems.contains(system.getClass())) { 
+//		if (!this.allSystems.contains(system.getClass())) {
 			try {
 				SystemInitalizer.initSystem(system, world);
-				System.out.println("system iniut!");
+				SystemInitalizer.initMapperInSystem(system, this.world.getComponentManager());
 			} catch (ReflectionException e) {
 				e.printStackTrace();
 				return;
@@ -64,23 +73,22 @@ public class SystemManager {
 			}
 			this.allSystems.add(system.getClass());
 //		} else {
-//			System.out.println("System ALready exist! (exeption?)");
-////			new SystemAlreadyAddedExeption(); // ?
+//			throw new SystemAlreadyAddedExeption(
+//					"The System " + system.getClass() + " is already added! and can only added once."); // ?
 //		}
 	}
 
-	public SystemThreadGroup getSystemThreadGroup(String groupName) {
+	private SystemThreadGroup getSystemThreadGroup(String groupName) {
 		return this.systemGroup.get(groupName);
 	}
 
-	public SystemThreadGroup createSystemThreadGroup(String groupName, int iterationPerSecond) {
+	public void createSystemThreadGroup(String groupName, int iterationPerSecond) {
 		SystemThreadGroup systemThreadGroup = this.getSystemThreadGroup(groupName);
 		if (systemThreadGroup == null) {
 			systemThreadGroup = new SystemThreadGroup(iterationPerSecond, groupName);
 			this.systemGroup.put(groupName, systemThreadGroup);
 			this.allSystemGroupsForIteration.add(systemThreadGroup);
 		}
-		return systemThreadGroup;
 	}
 
 	public void process() {
@@ -90,8 +98,10 @@ public class SystemManager {
 		}
 	}
 
-	public class SystemAlreadyAddedExeption extends Exception {
-		private static final long serialVersionUID = 5530107672002274672L;
-		
+	public class SystemAlreadyAddedExeption extends RuntimeException {
+		private static final long serialVersionUID = 360415350986643726L;
+		public SystemAlreadyAddedExeption(String massage) {
+			super(massage);
+		}
 	}
 }

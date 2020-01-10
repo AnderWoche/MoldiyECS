@@ -56,6 +56,7 @@ public class ComponentMapper<T extends Component> {
 				e.printStackTrace();
 			}
 			this.lock.unlock();
+//			exclusiceAccess();
 		}
 	}
 

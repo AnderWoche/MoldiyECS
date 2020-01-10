@@ -11,7 +11,8 @@ public class SystemThreadGroup {
 
 	private final Bag<BaseSystem> systems;
 	
-	private int sleepAfterIteration;
+	private boolean sleepAfterIteration = false;
+	private int sleepTimeAfterIteration;
 	
 	private String groupName;
 	private Thread thread;
@@ -38,16 +39,17 @@ public class SystemThreadGroup {
 						}
 						lock.unlock();
 					}
-					
 					BaseSystem[] baseSystems = systems.getData();
 					for(int i = 0, s = systems.size(); i < s; i++) {
 						BaseSystem system = baseSystems[i];
 						system.processSystem();
 					}
-					try {
-						Thread.sleep(sleepAfterIteration);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+					if(sleepAfterIteration) {
+						try {
+							Thread.sleep(0, sleepTimeAfterIteration);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
@@ -59,7 +61,7 @@ public class SystemThreadGroup {
 		this.systems.add(system);
 	}
 	
-	public void start() {
+	protected void start() {
 		BaseSystem[] baseSystems = systems.getData();
 		for(int i = 0, s = systems.size(); i < s; i++) {
 			BaseSystem system = baseSystems[i];
@@ -90,7 +92,14 @@ public class SystemThreadGroup {
 	}
 	
 	public void setIterationPerSecond(int iterationPerSecond) {
-		this.sleepAfterIteration = 1000 / iterationPerSecond;
+		this.sleepTimeAfterIteration = 1_000_000 / iterationPerSecond;
+		if(this.sleepTimeAfterIteration <= 100) {
+			this.sleepAfterIteration = false;
+		} else {
+			this.sleepAfterIteration = true;
+		}
+		System.out.println(this.sleepAfterIteration);
+		System.out.println(this.sleepTimeAfterIteration);
 	}
 	
 	public boolean isGroupPaused() {

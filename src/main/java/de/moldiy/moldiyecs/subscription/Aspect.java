@@ -47,7 +47,7 @@ public class Aspect {
 	/** Component bits of which the entity must possess at least one. */
 	BitVector oneSet;
 
-	private Aspect() {
+	public Aspect() {
 		this.allSet = new BitVector();
 		this.exclusionSet = new BitVector();
 		this.oneSet = new BitVector();
@@ -228,7 +228,7 @@ public class Aspect {
 		private final Bag<Class<? extends Component>> exclusionTypes;
 		private final Bag<Class<? extends Component>> oneTypes;
 
-		private Builder() {
+		public Builder() {
 			allTypes = new Bag<Class<? extends Component>>();
 			exclusionTypes = new Bag<Class<? extends Component>>();
 			oneTypes = new Bag<Class<? extends Component>>();

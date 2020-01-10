@@ -104,7 +104,7 @@ public class EntityManager {
 	
 	private Entity obtain() {
 		if (limbo.isEmpty()) {
-			return createEntity(nextId++);
+				return createEntity(nextId++);
 		} else {
 			int id = limbo.popFirst();
 			recycled.unsafeClear(id);
