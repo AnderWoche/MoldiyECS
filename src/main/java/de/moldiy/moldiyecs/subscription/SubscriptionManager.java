@@ -11,7 +11,8 @@ import de.moldiy.moldiyecs.utils.BitVector;
 public class SubscriptionManager {
 
 	private final World world;
-
+	
+	
 	private final HashMap<Aspect.Builder, EntitySubscription> activeSubscriptions = new HashMap<Aspect.Builder, EntitySubscription>();
 
 	private final Bag<EntitySubscription> entitySubscriptionsIterationBag = new Bag<EntitySubscription>(EntitySubscription.class);

@@ -15,22 +15,22 @@ public class SystemInitalizer {
 		Class<?> superClass = system.getClass();
 		while (true) {
 			if (superClass != null) {
-				if(superClass == BaseSystem.class) {
+				if (superClass == BaseSystem.class) {
 					Field f = ClassReflection.getDeclaredField(superClass, "world");
 					f.setAccessible(true);
 					f.set(system, world);
 				}
-				if(superClass == ManagedSystem.class) {
+				if (superClass == ManagedSystem.class) {
 					Aspect.Builder aspectBuilder = new Aspect.Builder();
-					if(superClass.isAnnotationPresent(All.class)) {
+					if (superClass.isAnnotationPresent(All.class)) {
 						All all = superClass.getAnnotation(All.class);
 						aspectBuilder.all(all.value());
 					}
-					if(superClass.isAnnotationPresent(One.class)) {
+					if (superClass.isAnnotationPresent(One.class)) {
 						One one = superClass.getAnnotation(One.class);
 						aspectBuilder.one(one.value());
 					}
-					if(superClass.isAnnotationPresent(Exclude.class)) {
+					if (superClass.isAnnotationPresent(Exclude.class)) {
 						Exclude exclude = superClass.getAnnotation(Exclude.class);
 						aspectBuilder.exclude(exclude.value());
 					}
@@ -41,12 +41,13 @@ public class SystemInitalizer {
 				superClass = superClass.getSuperclass();
 			} else
 				break;
-			
+
 		}
 
 	}
 
-	public static <T extends BaseSystem> void initMapperInSystem(T system, ComponentManager componentManager) throws ReflectionException {
+	public static <T extends BaseSystem> void initMapperInSystem(T system, SystemGroup group,
+			ComponentManager componentManager) throws ReflectionException {
 		Field[] field = ClassReflection.getDeclaredFields(system.getClass());
 		for (int i = 0, s = field.length; i < s; i++) {
 			Class<?> fieldClass = field[i].getType();
@@ -54,7 +55,7 @@ public class SystemInitalizer {
 				Mapper mapperAnotation = field[i].getAnnotation(Mapper.class);
 				if (mapperAnotation != null) {
 					field[i].setAccessible(true);
-					field[i].set(system, componentManager.getMapper(mapperAnotation.value()));
+					field[i].set(system, componentManager.getMapper(mapperAnotation.value(), group));
 				}
 
 			}

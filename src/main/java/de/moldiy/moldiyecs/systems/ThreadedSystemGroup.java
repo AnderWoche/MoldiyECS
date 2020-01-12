@@ -5,27 +5,18 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import de.moldiy.moldiyecs.utils.Bag;
+public class ThreadedSystemGroup extends SystemGroup {
 
-public class SystemThreadGroup {
-
-	private final Bag<BaseSystem> systems;
-	
 	private boolean sleepAfterIteration = false;
 	private int sleepTimeAfterIteration;
 	
-	private String groupName;
 	private Thread thread;
 	private boolean isThreadInPause;
 	
 	private Lock lock = new ReentrantLock();
 	private Condition condition = lock.newCondition();
 	
-	public SystemThreadGroup(int iterationPerSecond, String groupName) {
-		this.systems = new Bag<BaseSystem>(BaseSystem.class);
-		this.setIterationPerSecond(iterationPerSecond);
-		this.groupName = groupName;
-		
+	public ThreadedSystemGroup() {
 		this.thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -39,11 +30,7 @@ public class SystemThreadGroup {
 						}
 						lock.unlock();
 					}
-					BaseSystem[] baseSystems = systems.getData();
-					for(int i = 0, s = systems.size(); i < s; i++) {
-						BaseSystem system = baseSystems[i];
-						system.processSystem();
-					}
+					process();
 					if(sleepAfterIteration) {
 						try {
 							Thread.sleep(0, sleepTimeAfterIteration);
@@ -54,19 +41,12 @@ public class SystemThreadGroup {
 				}
 			}
 		});
-		this.thread.setName(groupName);
+		this.thread.setName("SystemThreadGroup-");
 	}
 	
-	public <T extends BaseSystem> void addSystem(T system) {
-		this.systems.add(system);
-	}
-	
-	protected void start() {
-		BaseSystem[] baseSystems = systems.getData();
-		for(int i = 0, s = systems.size(); i < s; i++) {
-			BaseSystem system = baseSystems[i];
-			system.initialize();
-		}	
+	@Override
+	public void initialize() {
+		super.initialize();
 		this.thread.start();
 	}
 	
@@ -83,17 +63,16 @@ public class SystemThreadGroup {
 		this.lock.unlock();
 	}
 	
-	public void dispose() {
-		this.thread.interrupt();
-	}
-	
-	public String getGroupName() {
-		return this.groupName;
-	}
-	
+	/**
+	 * Set a iteration Per Second if you don't set it it's iterate so mutch
+	 * it can, unlimetet.
+	 * If if you want unlimeted iterations so set it 0.
+	 * 
+	 * @param iterationPerSecond
+	 */
 	public void setIterationPerSecond(int iterationPerSecond) {
 		this.sleepTimeAfterIteration = 1_000_000 / iterationPerSecond;
-		if(this.sleepTimeAfterIteration <= 100) {
+		if(this.sleepTimeAfterIteration <= 1000) {
 			this.sleepAfterIteration = false;
 		} else {
 			this.sleepAfterIteration = true;

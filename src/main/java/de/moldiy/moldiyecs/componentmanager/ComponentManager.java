@@ -1,14 +1,17 @@
 package de.moldiy.moldiyecs.componentmanager;
 
+import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import de.moldiy.moldiyecs.componentmanager.ComponentMapper.ComponentListener;
+import de.moldiy.moldiyecs.systems.SystemGroup;
 import de.moldiy.moldiyecs.utils.Bag;
 
 public class ComponentManager {
 
 	private final Bag<ComponentMapper<? extends Component>> mappers = new Bag<ComponentMapper<? extends Component>>();
+	private final HashMap<Class<? extends Component>, Bag<SystemGroup>> mapperInSystemGroups = new HashMap<>();
 
 	private final ComponentIDFactory componentIDFactory = new ComponentIDFactory();
 
@@ -16,6 +19,7 @@ public class ComponentManager {
 
 	private Bag<EntityChangedComponentIDsListener> listener = new Bag<ComponentManager.EntityChangedComponentIDsListener>(
 			EntityChangedComponentIDsListener.class);
+
 	private ComponentListener componentListener;
 
 	public ComponentManager() {
@@ -25,6 +29,7 @@ public class ComponentManager {
 			public void componentAdded(Class<? extends Component> component, int entity) {
 				notifyEntityChangedComponentIDsListener_ADDED(component, entity);
 			}
+
 			@Override
 			public void componentDeleteted(Class<? extends Component> component, int entity) {
 				notifyEntityChangedComponentIDsListener_REMOVED(component, entity);
@@ -32,8 +37,14 @@ public class ComponentManager {
 		};
 	}
 
+	public <T extends Component> ComponentMapper<T> getMapper(Class<T> c, SystemGroup group) {
+		this.registerGroupOnAMapper(c, group);
+		this.checkForMapperSynchronizion(c);
+		return this.getOrCreateMapper(c);
+	}
+
 	@SuppressWarnings("unchecked")
-	public <T extends Component> ComponentMapper<T> getMapper(Class<T> c) {
+	private <T extends Component> ComponentMapper<T> getOrCreateMapper(Class<T> c) {
 		int componentID = this.componentIDFactory.getComponentIDFor(c);
 		ComponentMapper<?> mapper = this.mappers.get(componentID);
 		if (mapper == null) {
@@ -41,6 +52,29 @@ public class ComponentManager {
 			mapper.addComponentListener(this.componentListener);
 		}
 		return (ComponentMapper<T>) mapper;
+	}
+
+	private <T extends Component> void registerGroupOnAMapper(Class<T> c, SystemGroup systemGroup) {
+		Bag<SystemGroup> groups = this.mapperInSystemGroups.get(c);
+		if (groups == null) {
+			groups = new Bag<>(SystemGroup.class);
+			this.mapperInSystemGroups.put(c, groups);
+		}
+		if (!groups.contains(systemGroup)) {
+			groups.add(systemGroup);
+		}
+
+	}
+
+	private <T extends Component> void checkForMapperSynchronizion(Class<T> c) {
+		Bag<SystemGroup> bagGroup = this.mapperInSystemGroups.get(c);
+		if (bagGroup.size() > 1) {
+			ComponentMapper<T> mapper = this.getOrCreateMapper(c);
+			if (mapper.isLocked == false) {
+				mapper.isLocked = true;
+				System.out.println("The Mapper for " + c + "is Syncornized now!");
+			}
+		}
 	}
 
 	private <T extends Component> ComponentMapper<T> createMapper(Class<T> c, int componentID) {
@@ -55,21 +89,21 @@ public class ComponentManager {
 	public ComponentIDFactory getComponentIDFactory() {
 		return this.componentIDFactory;
 	}
-	
+
 	public void addEntityChangedCompoenntIDsListener(EntityChangedComponentIDsListener changedComponentIDsListener) {
 		this.listener.add(changedComponentIDsListener);
 	}
-	
+
 	protected void notifyEntityChangedComponentIDsListener_ADDED(Class<? extends Component> component, int entity) {
 		EntityChangedComponentIDsListener[] changedComponentIDs = this.listener.getData();
-		for(int i = 0, s = this.listener.size(); i < s; i++) {
+		for (int i = 0, s = this.listener.size(); i < s; i++) {
 			changedComponentIDs[i].entityComponentIDAdded(component, entity);
 		}
 	}
-	
+
 	protected void notifyEntityChangedComponentIDsListener_REMOVED(Class<? extends Component> component, int entity) {
 		EntityChangedComponentIDsListener[] changedComponentIDs = this.listener.getData();
-		for(int i = 0, s = this.listener.size(); i < s; i++) {
+		for (int i = 0, s = this.listener.size(); i < s; i++) {
 			changedComponentIDs[i].entityComponentIDRemoved(component, entity);
 		}
 	}

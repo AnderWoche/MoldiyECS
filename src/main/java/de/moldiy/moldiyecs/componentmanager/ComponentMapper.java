@@ -1,9 +1,5 @@
 package de.moldiy.moldiyecs.componentmanager;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.badlogic.gdx.utils.Pool;
 
 import de.moldiy.moldiyecs.utils.Bag;
@@ -11,15 +7,16 @@ import de.moldiy.moldiyecs.utils.reflect.ClassReflection;
 import de.moldiy.moldiyecs.utils.reflect.ReflectionException;
 
 public class ComponentMapper<T extends Component> {
-	
+
 	private Class<T> componentClass;
-	
+
 	private final Bag<T> components;
 	private final Pool<T> componentPool;
 
-	private Thread exclusiceAccess = null;
-	private final Lock lock;
-	private final Condition condition;
+	public boolean isLocked = false;
+//	private Thread exclusiceAccess = null;
+//	private final Lock lock;
+//	private final Condition condition;
 
 	private final Bag<ComponentListener> componentListener = new Bag<ComponentMapper.ComponentListener>(
 			ComponentListener.class);
@@ -27,8 +24,8 @@ public class ComponentMapper<T extends Component> {
 	public ComponentMapper(final Class<T> componentClass) {
 		this.componentClass = componentClass;
 		components = new Bag<T>();
-		this.lock = new ReentrantLock();
-		this.condition = lock.newCondition();
+//		this.lock = new ReentrantLock();
+//		this.condition = lock.newCondition();
 		this.componentPool = new Pool<T>() {
 			@Override
 			protected T newObject() {
@@ -45,93 +42,87 @@ public class ComponentMapper<T extends Component> {
 	/**
 	 * Don't forget after the exclusice operation unlock the public access.
 	 */
-	public void exclusiceAccess() {
-		if (this.exclusiceAccess == null) {
-			this.exclusiceAccess = Thread.currentThread();
-		} else {
-			this.lock.lock();
-			try {
-				this.condition.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			this.lock.unlock();
-//			exclusiceAccess();
-		}
-	}
-
-	public void publicAccess() {
-		this.lock.lock();
-		this.exclusiceAccess = null;
-		this.condition.signalAll();
-		this.lock.unlock();
-	}
+//	public void exclusiceAccess() {
+//		if (this.exclusiceAccess == null) {
+//			this.exclusiceAccess = Thread.currentThread();
+//		} else {
+//			this.lock.lock();
+//			try {
+//				this.condition.await();
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//			this.lock.unlock();
+//			// exclusiceAccess();
+//		}
+//	}
+//
+//	public void publicAccess() {
+//		this.lock.lock();
+//		this.exclusiceAccess = null;
+//		this.condition.signalAll();
+//		this.lock.unlock();
+//	}
 
 	public T get(int entity) {
-		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
-			this.lock.lock();
-			try {
-				this.condition.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		if (this.isLocked) {
+			synchronized (this) {
+				return this.components.safeGet(entity);
 			}
-			this.lock.unlock();
+		} else {
+			return this.components.safeGet(entity);
 		}
-		return this.components.safeGet(entity);
 	}
-	
+
 	/**
 	 * GEHÖER NCIHT ZU MEHTODE NUT IDEE NOTOIZ
 	 * 
 	 * wen erkannt wird das an diesem mapper mehr als 2 Systeme Interesiert sind
-	 * wird automatisch sobal die methode REMOVE oder CREATE aufgerufen wird der mapper nur exclusive 
-	 * nur für diesen thread freigegeben ohne das der benutzer dieses Frame works was merkt. damit aber am ende
-	 * der mapper wieder für alle freigeschaltet wrid wird immer IMMER am system ende automatisch the PUBLICACCESS
-	 *  methode aufgerufen soweit ich weis goibt es keine exeption wenn man notifi aufruft obwohl niemand wartet.
+	 * wird automatisch sobal die methode REMOVE oder CREATE aufgerufen wird der
+	 * mapper nur exclusive nur für diesen thread freigegeben ohne das der benutzer
+	 * dieses Frame works was merkt. damit aber am ende der mapper wieder für alle
+	 * freigeschaltet wrid wird immer IMMER am system ende automatisch the
+	 * PUBLICACCESS methode aufgerufen soweit ich weis goibt es keine exeption wenn
+	 * man notifi aufruft obwohl niemand wartet.
 	 * 
 	 * @param entityID
 	 */
 	public void remove(int entityID) {
-		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
-			this.lock.lock();
-			try {
-				this.condition.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			this.lock.unlock();
-		}
 		T component = this.get(entityID);
 		if (component != null) {
-			
-			
-			/** Delayed removable Implementation!!!!! JETZT ehmm nö!!.. 
-			*es egal wann die removed werden weil ja alles paralel ist
-			* Der sugrif auf mapper ist bei critischen sachen sowieso Sync!
-			* LÖSUNG: ein bitVecot der alle enitty markiert die verändert worden sind und befor ein system anfängt zu
-			* arbeiten und die mapper Synct werden die Subscriptions Aktualieiert mit den BitVEctor!?
-			*/
-			this.components.unsafeSet(entityID, null);
-			this.componentPool.free(component);
+			/**
+			 * Delayed removable Implementation!!!!! JETZT ehmm nö!!.. es egal wann die
+			 * removed werden weil ja alles paralel ist Der sugrif auf mapper ist bei
+			 * critischen sachen sowieso Sync! LÖSUNG: ein bitVecot der alle enitty markiert
+			 * die verändert worden sind und befor ein system anfängt zu arbeiten und die
+			 * mapper Synct werden die Subscriptions Aktualieiert mit den BitVEctor!?
+			 */
+			if (this.isLocked) {
+				synchronized (this) {
+					this.components.unsafeSet(entityID, null);
+					this.componentPool.free(component);
+				}
+			} else {
+				this.components.unsafeSet(entityID, null);
+				this.componentPool.free(component);
+			}
 			this.notifyComponentListener_EntityDeleted(entityID);
 		}
 
 	}
 
 	public T create(int entityID) {
-		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
-			this.lock.lock();
-			try {
-				this.condition.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			this.lock.unlock();
-		}
 		T component = this.get(entityID);
 		if (component == null) {
-			component = this.componentPool.obtain();
-			this.components.set(entityID, component);
+			if(this.isLocked) {
+				synchronized (this) {
+					component = this.componentPool.obtain();
+					this.components.set(entityID, component);
+				}
+			} else {
+				component = this.componentPool.obtain();
+				this.components.set(entityID, component);
+			}
 			this.notifyComponentListener_EntityAdded(entityID);
 		}
 		return component;
