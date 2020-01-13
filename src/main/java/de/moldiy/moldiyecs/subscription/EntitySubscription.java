@@ -41,11 +41,23 @@ public class EntitySubscription {
 		}
 	}
 
+	/**
+	 * check the entitys and update.(Remove/Add entities)
+	 * 
+	 * call this method only when you shure that the using Mapper of this
+	 * Subscription is only in one Single thread.
+	 * 
+	 * @return IntBag this the entitys with the Subscrpipted Compoennts (Only read don't remove from intbag)
+	 */
 	public IntBag updateEntityBag() {
 		this.entities.toIntBag(this.entitiesForIteration);
 		return this.getEntites();
 	}
 
+	/**
+	 * check the entitys and update.(Remove/Add entities)
+	 * @return IntBag this the entitys with the Subscrpipted Compoennts (Only read don't remove from intbag)
+	 */
 	public IntBag updateEntityBagWithLock() {
 		this.needToLock = true;
 		this.entities.toIntBag(this.entitiesForIteration);

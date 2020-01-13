@@ -57,10 +57,14 @@ public class SystemManager {
 		}
 	}
 
-	public ThreadedSystemGroup createSystemThreadGroup() {
+	public ThreadedSystemGroup createThreadedSystemGroup() {
 		ThreadedSystemGroup systemThreadGroup = new ThreadedSystemGroup();
 		this.systemGroups.add(systemThreadGroup);
 		return systemThreadGroup;
+	}
+	
+	public SystemGroup getMainSystemGroup() {
+		return this.mainThreadSystem;
 	}
 
 	public void process() {
@@ -76,9 +80,5 @@ public class SystemManager {
 		public SystemAlreadyAddedExeption(String massage) {
 			super(massage);
 		}
-	}
-
-	public SystemGroup getMainThreadSystemGroup() {
-		return this.mainThreadSystem;
 	}
 }

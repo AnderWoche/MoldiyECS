@@ -56,16 +56,16 @@ public class FunktionsTest {
 	public void test() {
 		World w = new World();
 		
-		w.getSystemManager().addSystem(new MoveSystem(), w.getSystemManager().getMainThreadSystemGroup());
+		w.getSystemManager().addSystem(new MoveSystem(), w.getSystemManager().getMainSystemGroup());
 		
-		ThreadedSystemGroup threadedSystemGroup = w.getSystemManager().createSystemThreadGroup();
+		ThreadedSystemGroup threadedSystemGroup = w.getSystemManager().createThreadedSystemGroup();
 		w.getSystemManager().addSystem(new MoveSystem2(), threadedSystemGroup);
 		
 		w.start();
 		
 		for(int i = 0; i < 2000; i++) {
 			int entity = w.getEntityManager().create();
-			ComponentMapper<TransformCompoent> component = w.getComponentManager().getMapper(TransformCompoent.class, w.getSystemManager().getMainThreadSystemGroup());
+			ComponentMapper<TransformCompoent> component = w.getComponentManager().getMapper(TransformCompoent.class, w.getSystemManager().getMainSystemGroup());
 			component.create(entity);
 		}
 		
