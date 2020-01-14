@@ -1,3 +1,14 @@
+/**
+ * Copyright 2011 GAMADU.COM. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package de.moldiy.moldiyecs;
 
 import de.moldiy.moldiyecs.utils.Bag;
@@ -9,41 +20,41 @@ public class EntityManager {
 
 	private final Bag<Entity> entities;
 	private final Bag<BitVector> componentIDFromEntitys = new Bag<BitVector>();
-	
+
 	private final BitVector recycled = new BitVector();
 	private final IntDeque limbo = new IntDeque();
 	private int nextId;
 	private Bag<BitVector> entityBitVectorsStores = new Bag<BitVector>(BitVector.class);
-	
+
 	public EntityManager(int initialContainerSize) {
 		entities = new Bag<Entity>(initialContainerSize);
 		this.registerEntityStore(recycled);
 	}
-	
+
 	public void registerEntityStore(BitVector bv) {
 		bv.ensureCapacity(entities.getCapacity());
 		entityBitVectorsStores.add(bv);
 	}
-	
+
 	public Entity createEntityInstance() {
 		return obtain();
 	}
-	
+
 	public int create() {
 		return obtain().getID();
 	}
-	
+
 	public boolean isActive(int entityId) {
 		return !recycled.unsafeGet(entityId);
 	}
-	
+
 	public BitVector getComponentIDs(int entity) {
 		return this.componentIDFromEntitys.get(entity);
 	}
-	
+
 	public void deleteAndFreeEntitys(IntBag pendingDeletion) {
 		int[] ids = pendingDeletion.getData();
-		for(int i = 0, s = pendingDeletion.size(); s > i; i++) {
+		for (int i = 0, s = pendingDeletion.size(); s > i; i++) {
 			int id = ids[i];
 			// usually never happens but:
 			// this happens when an entity is deleted before
@@ -54,7 +65,7 @@ public class EntityManager {
 			}
 		}
 	}
-	
+
 	public void reset() {
 //		int count = world.getAspectSubscriptionManager()
 //			.get(all())
@@ -71,7 +82,7 @@ public class EntityManager {
 		nextId = 0;
 
 	}
-	
+
 	private Entity createEntity(int id) {
 		Entity e = new Entity(id);
 		if (e.getID() >= entities.getCapacity()) {
@@ -86,11 +97,11 @@ public class EntityManager {
 
 		return e;
 	}
-	
+
 	public Entity getEntity(int entityId) {
 		return entities.get(entityId);
 	}
-	
+
 	private void growEntityStores() {
 		int newSize = 2 * entities.getCapacity();
 		this.entities.ensureCapacity(newSize);
@@ -101,20 +112,20 @@ public class EntityManager {
 			this.entityBitVectorsStores.get(i).ensureCapacity(newSize);
 		}
 	}
-	
+
 	private Entity obtain() {
 		if (limbo.isEmpty()) {
-				return createEntity(nextId++);
+			return createEntity(nextId++);
 		} else {
 			int id = limbo.popFirst();
 			recycled.unsafeClear(id);
 			return entities.get(id);
 		}
 	}
-	
+
 	private void free(int entityId) {
 		limbo.add(entityId);
 		recycled.unsafeSet(entityId);
 	}
-	
+
 }
