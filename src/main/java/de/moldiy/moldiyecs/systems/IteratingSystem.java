@@ -20,15 +20,12 @@ import de.moldiy.moldiyecs.utils.IntBag;
 
 /**
  * This system manage Automaticly Critical code and Syncronized when need
- * - The Mapper getting automaticly syncronized if need
  * - The Entity Subscription getting Automatiocly sycronized if need.
  * 
- * when the frame work Automaticly detect That System have no dependencys to other subcriptions or Mapper
- * then it is automaticly not syncronized, so it's faster
  * @author Moldiy
  *
  */
-public abstract class ManagedSystem extends BaseSystem {
+public abstract class IteratingSystem extends BaseSystem {
 
 	private EntitySubscription subscription;
 
@@ -48,4 +45,8 @@ public abstract class ManagedSystem extends BaseSystem {
 	}
 
 	public abstract void processEntity(int entity);
+	
+	protected EntitySubscription getSubscription() {
+		return this.subscription;
+	}
 }

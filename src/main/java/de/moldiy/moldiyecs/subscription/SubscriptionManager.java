@@ -26,11 +26,11 @@ import de.moldiy.moldiyecs.utils.BitVector;
 public class SubscriptionManager {
 
 	private final World world;
-	
-	
+
 	private final HashMap<Aspect.Builder, EntitySubscription> activeSubscriptions = new HashMap<Aspect.Builder, EntitySubscription>();
 
-	private final Bag<EntitySubscription> entitySubscriptionsIterationBag = new Bag<EntitySubscription>(EntitySubscription.class);
+	private final Bag<EntitySubscription> entitySubscriptionsIterationBag = new Bag<EntitySubscription>(
+			EntitySubscription.class);
 
 	private Lock lock = new ReentrantLock();
 
@@ -53,7 +53,8 @@ public class SubscriptionManager {
 	private EntitySubscription createSubscription(Aspect.Builder aspectBuilder) {
 		this.lock.lock();
 		EntitySubscription entitySubscription = new EntitySubscription(
-				aspectBuilder.build(world.getComponentManager().getComponentIDFactory()), world.getEntityManager());
+				aspectBuilder.build(world.getComponentManager().getComponentIDFactory()));
+		this.world.getEntityManager().registerEntityStore(entitySubscription.getEntitiesAsBitVector());
 
 		this.activeSubscriptions.put(aspectBuilder, entitySubscription);
 		this.entitySubscriptionsIterationBag.add(entitySubscription);

@@ -21,11 +21,17 @@ public abstract class BaseSystem {
 	 */
 	private World world;
 	
+	private SystemGroup group;
+	
 	public BaseSystem() {
 	}
 	
 	public World getWorld() {
 		return world;
+	}
+	
+	public SystemGroup getGroup() {
+		return this.group;
 	}
 	
 	protected void initialize() {};

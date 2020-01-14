@@ -16,13 +16,19 @@ public class Entity {
 	
 	private int id;
 	
+	private World world;
 	
-	public Entity(int id) {
+	public Entity(int id, World world) {
 		this.id = id;
+		this.world = world;
 	}
 	
 	public int getID() {
 		return this.id;
+	}
+	
+	public World getWorld() {
+		return this.world;
 	}
 
 }

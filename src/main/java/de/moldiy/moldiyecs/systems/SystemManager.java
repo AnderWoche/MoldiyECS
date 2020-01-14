@@ -15,6 +15,8 @@ limitations under the License.
  */
 package de.moldiy.moldiyecs.systems;
 
+import java.util.LinkedHashMap;
+
 import de.moldiy.moldiyecs.World;
 import de.moldiy.moldiyecs.utils.Bag;
 import de.moldiy.moldiyecs.utils.reflect.ReflectionException;
@@ -25,7 +27,8 @@ public class SystemManager {
 
 	private final World world;
 
-	private final Bag<Class<? extends BaseSystem>> registertBaseSystems = new Bag<>();
+	private final LinkedHashMap<Class<? extends BaseSystem>, BaseSystem> registertBaseSystems = new LinkedHashMap<>();
+	
 	private final Bag<SystemGroup> systemGroups = new Bag<SystemGroup>(SystemGroup.class);
 	private final SystemGroup mainThreadGroup = new SystemGroup();
 
@@ -61,9 +64,9 @@ public class SystemManager {
 		if(this.isStarted) {
 			throw new WorldAlreadyStartExeption("You can only add Systems when the World is not started");
 		}
-		if (!this.registertBaseSystems.contains(system.getClass())) {
+		if (!this.registertBaseSystems.containsKey(system.getClass())) {
 			try {
-				SystemInitalizer.initSystem(system, world);
+				SystemInitalizer.initSystem(system, group, world);
 				SystemInitalizer.initMapperInSystem(system, group, this.world.getComponentManager());
 			} catch (ReflectionException e) {
 				e.printStackTrace();
@@ -75,11 +78,20 @@ public class SystemManager {
 			} else {
 				group.addSystem(system);
 			}
-			this.registertBaseSystems.add(system.getClass());
+			this.registertBaseSystems.put(system.getClass(), system);
 		} else {
 			throw new SystemAlreadyAddedExeption(
 					"The System " + system.getClass() + " is already added! and can only addedonce."); // ?
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T extends BaseSystem> T getSystem(Class<T> system) {
+		BaseSystem baseSys = this.registertBaseSystems.get(system.getClass());
+		if(baseSys != null) {
+			return (T) baseSys;
+		}
+		return null;
 	}
 
 	public ThreadedSystemGroup createThreadedSystemGroup() {

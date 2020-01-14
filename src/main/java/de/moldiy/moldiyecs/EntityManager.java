@@ -13,10 +13,14 @@ package de.moldiy.moldiyecs;
 
 import de.moldiy.moldiyecs.utils.Bag;
 import de.moldiy.moldiyecs.utils.BitVector;
-import de.moldiy.moldiyecs.utils.IntBag;
 import de.moldiy.moldiyecs.utils.IntDeque;
 
 public class EntityManager {
+	
+	/**
+	 * The World for The Entity Instances.
+	 */
+	private World world;
 
 	private final Bag<Entity> entities;
 	private final Bag<BitVector> componentIDFromEntitys = new Bag<BitVector>();
@@ -26,7 +30,8 @@ public class EntityManager {
 	private int nextId;
 	private Bag<BitVector> entityBitVectorsStores = new Bag<BitVector>(BitVector.class);
 
-	public EntityManager(int initialContainerSize) {
+	public EntityManager(int initialContainerSize, World world) {
+		this.world = world;
 		entities = new Bag<Entity>(initialContainerSize);
 		this.registerEntityStore(recycled);
 	}
@@ -52,18 +57,14 @@ public class EntityManager {
 		return this.componentIDFromEntitys.get(entity);
 	}
 
-	public void deleteAndFreeEntitys(IntBag pendingDeletion) {
-		int[] ids = pendingDeletion.getData();
-		for (int i = 0, s = pendingDeletion.size(); s > i; i++) {
-			int id = ids[i];
+	public void deleteAndFreeEntitys(int entity) {
 			// usually never happens but:
 			// this happens when an entity is deleted before
 			// it is added to the world, ie; created and deleted
 			// before World#process has been called
-			if (!recycled.unsafeGet(id)) {
-				free(id);
+			if (!recycled.unsafeGet(entity)) {
+				free(entity);
 			}
-		}
 	}
 
 	public void reset() {
@@ -84,7 +85,7 @@ public class EntityManager {
 	}
 
 	private Entity createEntity(int id) {
-		Entity e = new Entity(id);
+		Entity e = new Entity(id, this.world);
 		if (e.getID() >= entities.getCapacity()) {
 			growEntityStores();
 		}
@@ -105,8 +106,6 @@ public class EntityManager {
 	private void growEntityStores() {
 		int newSize = 2 * entities.getCapacity();
 		this.entities.ensureCapacity(newSize);
-//		ComponentManager cm = world.getComponentManager();
-//		cm.ensureCapacity(newSize);
 
 		for (int i = 0, s = this.entityBitVectorsStores.size(); s > i; i++) {
 			this.entityBitVectorsStores.get(i).ensureCapacity(newSize);

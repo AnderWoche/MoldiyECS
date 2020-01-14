@@ -19,7 +19,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import de.moldiy.moldiyecs.EntityManager;
+import de.moldiy.moldiyecs.utils.Bag;
 import de.moldiy.moldiyecs.utils.BitVector;
 import de.moldiy.moldiyecs.utils.IntBag;
 
@@ -30,13 +30,15 @@ public class EntitySubscription {
 	private final BitVector entities = new BitVector();
 	private final IntBag entitiesForIteration = new IntBag();
 
+	private final Bag<SubscriptionListener> subscriptionListeners = new Bag<EntitySubscription.SubscriptionListener>(
+			SubscriptionListener.class);
+
 	private final Lock lock = new ReentrantLock();
 	private final Condition condition = lock.newCondition();
 	private boolean needToLock;
 
-	public EntitySubscription(Aspect aspect, EntityManager entityManager) {
+	public EntitySubscription(Aspect aspect) {
 		this.aspect = aspect;
-		entityManager.registerEntityStore(entities);
 	}
 
 	public void entityComponentsChanged(int entity, BitVector compoentIDs) {
@@ -50,9 +52,17 @@ public class EntitySubscription {
 			this.lock.unlock();
 		}
 		if (aspect.isInterested(compoentIDs)) {
-			entities.unsafeSet(entity);
+			System.out.println(this.aspect.getAllSet());
+			System.out.println(compoentIDs);
+			if(entities.unsafeGet(entity) == false) {
+				this.notifyListenersInserted(entity);
+				entities.unsafeSet(entity);
+			}
 		} else {
-			entities.unsafeClear(entity);
+			if(entities.unsafeGet(entity) == true) {
+				this.notifyListenersRemoved(entity);
+				entities.unsafeClear(entity);
+			}
 		}
 	}
 
@@ -62,16 +72,19 @@ public class EntitySubscription {
 	 * call this method only when you shure that the using Mapper of this
 	 * Subscription is only in one Single thread.
 	 * 
-	 * @return IntBag this the entitys with the Subscrpipted Compoennts (Only read don't remove from intbag)
+	 * @return IntBag this the entitys with the Subscrpipted Compoennts (Only read
+	 *         don't remove from intbag)
 	 */
 	public IntBag updateEntityBag() {
 		this.entities.toIntBag(this.entitiesForIteration);
-		return this.getEntites();
+		return this.getEntities();
 	}
 
 	/**
 	 * check the entitys and update.(Remove/Add entities)
-	 * @return IntBag this the entitys with the Subscrpipted Compoennts (Only read don't remove from intbag)
+	 * 
+	 * @return IntBag this the entitys with the Subscrpipted Compoennts (Only read
+	 *         don't remove from intbag)
 	 */
 	public IntBag updateEntityBagWithLock() {
 		this.needToLock = true;
@@ -80,11 +93,39 @@ public class EntitySubscription {
 		this.lock.lock();
 		this.condition.signalAll();
 		this.lock.unlock();
-		return this.getEntites();
+		return this.getEntities();
 	}
 
-	public IntBag getEntites() {
+	public IntBag getEntities() {
 		return entitiesForIteration;
+	}
+	
+	public BitVector getEntitiesAsBitVector() {
+		return this.entities;
+	}
+
+	public void addSubscriptionListener(SubscriptionListener subscriptionListener) {
+		this.subscriptionListeners.add(subscriptionListener);
+	}
+	
+	protected void notifyListenersInserted(int entity) {
+		SubscriptionListener[] listeners = this.subscriptionListeners.getData();
+		for(int i = 0, s = this.subscriptionListeners.size(); i < s; i++) {
+			listeners[i].inserted(entity);
+		}
+	}
+	
+	protected void notifyListenersRemoved(int entity) {
+		SubscriptionListener[] listeners = this.subscriptionListeners.getData();
+		for(int i = 0, s = this.subscriptionListeners.size(); i < s; i++) {
+			listeners[i].removed(entity);
+		}
+	}
+
+	public interface SubscriptionListener {
+		public void removed(int entity);
+
+		public void inserted(int entity);
 	}
 
 }

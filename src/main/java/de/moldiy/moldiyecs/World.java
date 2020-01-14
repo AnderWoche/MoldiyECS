@@ -29,7 +29,7 @@ public class World {
 	private SystemManager systemManager;
 
 	public World() {
-		this.entityManager = new EntityManager(128);
+		this.entityManager = new EntityManager(128, this);
 		this.componentManager = new ComponentManager();
 		this.subscriptionManager = new SubscriptionManager(this);
 		this.systemManager = new SystemManager(this);
@@ -37,7 +37,7 @@ public class World {
 			@Override
 			public void entityComponentIDRemoved(Class<? extends Component> component, int entity) {
 				BitVector componentIDs = entityManager.getComponentIDs(entity);
-				componentIDs.unsafeClear(componentManager.getComponentIDFactory().getComponentIDFor(component));
+				componentIDs.clear(componentManager.getComponentIDFactory().getComponentIDFor(component));
 				subscriptionManager.entityComponentsChanged(entity, componentIDs);
 			}
 
@@ -50,6 +50,19 @@ public class World {
 		});
 
 	}
+	
+	public Entity createEntityInstance() {
+		return this.entityManager.createEntityInstance();
+	}
+	
+	public int createEntity() {
+		return this.entityManager.create();
+	}
+	
+	public void deleteEntity(int entity) {
+		this.entityManager.deleteAndFreeEntitys(entity);
+	}
+	
 
 	public void initializeAndStart() {
 		this.systemManager.initializeAndStart();
@@ -70,9 +83,9 @@ public class World {
 	public ComponentManager getComponentManager() {
 		return this.componentManager;
 	}
-
+	
 	public EntityManager getEntityManager() {
-		return this.entityManager;
+		return entityManager;
 	}
 
 }

@@ -26,7 +26,7 @@ import de.moldiy.moldiyecs.utils.reflect.ReflectionException;
 
 public class SystemInitalizer {
 
-	public static <T extends BaseSystem> void initSystem(T system, World world) throws ReflectionException {
+	public static <T extends BaseSystem> void initSystem(T system, SystemGroup group, World world) throws ReflectionException {
 		Class<?> superClass = system.getClass();
 		while (true) {
 			if (superClass != null) {
@@ -34,8 +34,12 @@ public class SystemInitalizer {
 					Field f = ClassReflection.getDeclaredField(superClass, "world");
 					f.setAccessible(true);
 					f.set(system, world);
+					
+					Field groupField = ClassReflection.getDeclaredField(superClass, "group");
+					groupField.setAccessible(true);
+					groupField.set(system, group);
 				}
-				if (superClass == ManagedSystem.class) {
+				if (superClass == IteratingSystem.class) {
 					Aspect.Builder aspectBuilder = new Aspect.Builder();
 					if (superClass.isAnnotationPresent(All.class)) {
 						All all = superClass.getAnnotation(All.class);
