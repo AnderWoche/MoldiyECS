@@ -20,18 +20,25 @@ import de.moldiy.moldiyecs.utils.Bag;
 import de.moldiy.moldiyecs.utils.reflect.ReflectionException;
 
 public class SystemManager {
+	
+	private boolean isStarted = false;
 
 	private final World world;
 
 	private final Bag<Class<? extends BaseSystem>> registertBaseSystems = new Bag<>();
 	private final Bag<SystemGroup> systemGroups = new Bag<SystemGroup>(SystemGroup.class);
-	private final SystemGroup mainThreadSystem = new SystemGroup();
+	private final SystemGroup mainThreadGroup = new SystemGroup();
 
 	public SystemManager(World world) {
 		this.world = world;
+		this.systemGroups.add(mainThreadGroup);
 	}
 
-	public void start() {
+	/**
+	 * init and start The Whole systemGroups and systems.
+	 */
+	public void initializeAndStart() {
+		this.isStarted = true;
 		SystemGroup[] baseSystems = this.systemGroups.getData();
 		for (int i = 0, s = this.systemGroups.size(); i < s; i++) {
 			baseSystems[i].initialize();
@@ -51,6 +58,9 @@ public class SystemManager {
 	 *            The system that will be added
 	 */
 	public <T extends BaseSystem> void addSystem(T system, SystemGroup group) {
+		if(this.isStarted) {
+			throw new WorldAlreadyStartExeption("You can only add Systems when the World is not started");
+		}
 		if (!this.registertBaseSystems.contains(system.getClass())) {
 			try {
 				SystemInitalizer.initSystem(system, world);
@@ -79,7 +89,7 @@ public class SystemManager {
 	}
 	
 	public SystemGroup getMainSystemGroup() {
-		return this.mainThreadSystem;
+		return this.mainThreadGroup;
 	}
 
 	public void process() {
@@ -88,11 +98,22 @@ public class SystemManager {
 			baseSystems[i].process();
 		}
 	}
+	
+	public boolean isStated() {
+		return this.isStarted;
+	}
 
 	public class SystemAlreadyAddedExeption extends RuntimeException {
 		private static final long serialVersionUID = 360415350986643726L;
 
 		public SystemAlreadyAddedExeption(String massage) {
+			super(massage);
+		}
+	}
+	
+	public class WorldAlreadyStartExeption extends RuntimeException {
+		private static final long serialVersionUID = 1356963955559879272L;
+		public WorldAlreadyStartExeption(String massage) {
 			super(massage);
 		}
 	}

@@ -51,8 +51,8 @@ public class World {
 
 	}
 
-	public void start() {
-		this.systemManager.start();
+	public void initializeAndStart() {
+		this.systemManager.initializeAndStart();
 	}
 
 	public void process() {
