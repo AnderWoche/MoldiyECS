@@ -16,6 +16,7 @@ limitations under the License.
 package de.moldiy.moldiyecs.systems;
 
 import de.moldiy.moldiyecs.World;
+import de.moldiy.moldiyecs.componentmanager.Component;
 import de.moldiy.moldiyecs.componentmanager.ComponentManager;
 import de.moldiy.moldiyecs.componentmanager.ComponentMapper;
 import de.moldiy.moldiyecs.componentmanager.Mapper;
@@ -41,16 +42,16 @@ public class SystemInitalizer {
 				}
 				if (superClass == IteratingSystem.class) {
 					Aspect.Builder aspectBuilder = new Aspect.Builder();
-					if (superClass.isAnnotationPresent(All.class)) {
-						All all = superClass.getAnnotation(All.class);
+					if (system.getClass().isAnnotationPresent(All.class)) {
+						All all = system.getClass().getAnnotation(All.class);
 						aspectBuilder.all(all.value());
 					}
-					if (superClass.isAnnotationPresent(One.class)) {
-						One one = superClass.getAnnotation(One.class);
+					if (system.getClass().isAnnotationPresent(One.class)) {
+						One one = system.getClass().getAnnotation(One.class);
 						aspectBuilder.one(one.value());
 					}
-					if (superClass.isAnnotationPresent(Exclude.class)) {
-						Exclude exclude = superClass.getAnnotation(Exclude.class);
+					if (system.getClass().isAnnotationPresent(Exclude.class)) {
+						Exclude exclude = system.getClass().getAnnotation(Exclude.class);
 						aspectBuilder.exclude(exclude.value());
 					}
 					Field f = ClassReflection.getDeclaredField(superClass, "subscription");

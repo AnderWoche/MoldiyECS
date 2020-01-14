@@ -52,8 +52,6 @@ public class EntitySubscription {
 			this.lock.unlock();
 		}
 		if (aspect.isInterested(compoentIDs)) {
-			System.out.println(this.aspect.getAllSet());
-			System.out.println(compoentIDs);
 			if(entities.unsafeGet(entity) == false) {
 				this.notifyListenersInserted(entity);
 				entities.unsafeSet(entity);
