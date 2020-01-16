@@ -54,7 +54,7 @@ public class ComponentManager {
 
 	public <T extends Component> ComponentMapper<T> getMapper(Class<T> c, SystemGroup group) {
 		this.registerGroupOnAMapper(c, group);
-		this.checkForMapperSynchronizion(c);
+//		this.checkForMapperSynchronizion(c);
 		return this.getOrCreateMapper(c);
 	}
 
@@ -77,6 +77,7 @@ public class ComponentManager {
 		}
 		if (!groups.contains(systemGroup)) {
 			groups.add(systemGroup);
+			this.checkForMapperSynchronizion(c); // wird nur ausgeführt wenn ein system hinzugefügt wird
 		}
 
 	}

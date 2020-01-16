@@ -114,14 +114,15 @@ public class ComponentMapper<T extends Component> {
 			 */
 			if (this.isLocked) {
 				synchronized (this) {
+					this.notifyComponentListener_EntityDeleted(entityID);
 					this.components.unsafeSet(entityID, null);
 					this.componentPool.free(component);
 				}
 			} else {
+				this.notifyComponentListener_EntityDeleted(entityID);
 				this.components.unsafeSet(entityID, null);
 				this.componentPool.free(component);
 			}
-			this.notifyComponentListener_EntityDeleted(entityID);
 		}
 
 	}
@@ -133,14 +134,37 @@ public class ComponentMapper<T extends Component> {
 				synchronized (this) {
 					component = this.componentPool.obtain();
 					this.components.set(entityID, component);
+					this.notifyComponentListener_EntityAdded(entityID);
 				}
 			} else {
 				component = this.componentPool.obtain();
 				this.components.set(entityID, component);
+				this.notifyComponentListener_EntityAdded(entityID);
 			}
-			this.notifyComponentListener_EntityAdded(entityID);
 		}
 		return component;
+	}
+	
+	public T createComponentOnly() {
+		if(this.isLocked) {
+			synchronized (this) {
+				return this.componentPool.obtain();
+			}
+		} else {
+			return this.componentPool.obtain();
+		}
+	}
+	
+	public void add(int entityID, T component) {
+		if(this.isLocked) {
+			synchronized (this) {
+				this.components.set(entityID, component);
+				this.notifyComponentListener_EntityAdded(entityID);
+			}
+		} else {
+			this.components.set(entityID, component);
+			this.notifyComponentListener_EntityAdded(entityID);
+		}
 	}
 
 	public void addComponentListener(ComponentListener componentListener) {

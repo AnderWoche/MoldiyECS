@@ -64,6 +64,9 @@ public class EntityManager {
 			// before World#process has been called
 			if (!recycled.unsafeGet(entity)) {
 				free(entity);
+				BitVector componentIDs =  this.componentIDFromEntitys.get(entity);
+				componentIDs.clear();
+				this.world.getSubscriptionManager().entityComponentsChanged(entity, componentIDs);
 			}
 	}
 

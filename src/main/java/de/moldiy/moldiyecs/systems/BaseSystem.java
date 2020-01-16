@@ -11,6 +11,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
  */
 package de.moldiy.moldiyecs.systems;
 
+import de.moldiy.moldiyecs.EntityEdit;
 import de.moldiy.moldiyecs.World;
 
 public abstract class BaseSystem {
@@ -23,6 +24,8 @@ public abstract class BaseSystem {
 	
 	private SystemGroup group;
 	
+	private EntityEdit entityEdit;
+	
 	public BaseSystem() {
 	}
 	
@@ -34,11 +37,17 @@ public abstract class BaseSystem {
 		return this.group;
 	}
 	
-	protected void initialize() {};
+	protected void initialize() {
+		this.entityEdit = new EntityEdit(this.world, this.group);
+	}
+	
+	public EntityEdit getEntityEdit() {
+		return this.entityEdit;
+	}
 	
 	public abstract void processSystem();
 	
-	public void dispose() {};
+	public void dispose() {}
 	
 	
 }

@@ -16,7 +16,6 @@ limitations under the License.
 package de.moldiy.moldiyecs.systems;
 
 import de.moldiy.moldiyecs.World;
-import de.moldiy.moldiyecs.componentmanager.Component;
 import de.moldiy.moldiyecs.componentmanager.ComponentManager;
 import de.moldiy.moldiyecs.componentmanager.ComponentMapper;
 import de.moldiy.moldiyecs.componentmanager.Mapper;
@@ -66,16 +65,16 @@ public class SystemInitalizer {
 
 	}
 
-	public static <T extends BaseSystem> void initMapperInSystem(T system, SystemGroup group,
+	public static <T extends Object> void initMapper(T obejct, SystemGroup group,
 			ComponentManager componentManager) throws ReflectionException {
-		Field[] field = ClassReflection.getDeclaredFields(system.getClass());
+		Field[] field = ClassReflection.getDeclaredFields(obejct.getClass());
 		for (int i = 0, s = field.length; i < s; i++) {
 			Class<?> fieldClass = field[i].getType();
 			if (fieldClass == ComponentMapper.class) {
 				Mapper mapperAnotation = field[i].getAnnotation(Mapper.class);
 				if (mapperAnotation != null) {
 					field[i].setAccessible(true);
-					field[i].set(system, componentManager.getMapper(mapperAnotation.value(), group));
+					field[i].set(obejct, componentManager.getMapper(mapperAnotation.value(), group));
 				}
 
 			}

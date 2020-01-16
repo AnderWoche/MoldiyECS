@@ -50,6 +50,7 @@ public class SubscriptionManager {
 		return (subscription != null) ? subscription : this.createSubscription(aspectBuilder);
 	}
 
+	//!!!!!!!!!! Wen eine neue sub erstellt wird mussen ale schon forgandenn entity überpruft wrrden
 	private EntitySubscription createSubscription(Aspect.Builder aspectBuilder) {
 		this.lock.lock();
 		EntitySubscription entitySubscription = new EntitySubscription(
