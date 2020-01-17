@@ -30,7 +30,7 @@ public class EntityEdit {
 		this.world.getComponentManager().getMapper(component, this.group).remove(entity);
 	}
 
-	public <T extends Component> T createComponentOnly(int entity, Class<T> component) {
+	public <T extends Component> T createComponentOnly(Class<T> component) {
 		return this.world.getComponentManager().getMapper(component, this.group).createComponentOnly();
 	}
 

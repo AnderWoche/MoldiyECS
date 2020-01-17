@@ -15,10 +15,6 @@ limitations under the License.
  */
 package de.moldiy.moldiyecs.subscription;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import de.moldiy.moldiyecs.utils.Bag;
 import de.moldiy.moldiyecs.utils.BitVector;
 import de.moldiy.moldiyecs.utils.IntBag;
@@ -33,33 +29,22 @@ public class EntitySubscription {
 	private final Bag<SubscriptionListener> subscriptionListeners = new Bag<EntitySubscription.SubscriptionListener>(
 			SubscriptionListener.class);
 
-	private final Lock lock = new ReentrantLock();
-	private final Condition condition = lock.newCondition();
-	private boolean needToLock;
-
 	public EntitySubscription(Aspect aspect) {
 		this.aspect = aspect;
 	}
 
 	public void entityComponentsChanged(int entity, BitVector compoentIDs) {
-		if (needToLock) {
-			this.lock.lock();
-			try {
-				this.condition.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			this.lock.unlock();
-		}
-		if (aspect.isInterested(compoentIDs)) {
-			if(entities.unsafeGet(entity) == false) {
-				this.notifyListenersInserted(entity);
-				entities.unsafeSet(entity);
-			}
-		} else {
-			if(entities.unsafeGet(entity) == true) {
-				this.notifyListenersRemoved(entity);
-				entities.unsafeClear(entity);
+		synchronized (entities) {
+			if (aspect.isInterested(compoentIDs)) {
+				if (entities.unsafeGet(entity) == false) {
+					entities.unsafeSet(entity);
+					this.notifyListenersInserted(entity);
+				}
+			} else {
+				if (entities.unsafeGet(entity) == true) {
+					entities.unsafeClear(entity);
+					this.notifyListenersRemoved(entity);
+				}
 			}
 		}
 	}
@@ -85,19 +70,16 @@ public class EntitySubscription {
 	 *         don't remove from intbag)
 	 */
 	public IntBag updateEntityBagWithLock() {
-		this.needToLock = true;
-		this.entities.toIntBag(this.entitiesForIteration);
-		this.needToLock = false;
-		this.lock.lock();
-		this.condition.signalAll();
-		this.lock.unlock();
+		synchronized (entities) {
+			this.entities.toIntBag(this.entitiesForIteration);
+		}
 		return this.getEntities();
 	}
 
 	public IntBag getEntities() {
 		return entitiesForIteration;
 	}
-	
+
 	public BitVector getEntitiesAsBitVector() {
 		return this.entities;
 	}
@@ -105,17 +87,17 @@ public class EntitySubscription {
 	public void addSubscriptionListener(SubscriptionListener subscriptionListener) {
 		this.subscriptionListeners.add(subscriptionListener);
 	}
-	
+
 	protected void notifyListenersInserted(int entity) {
 		SubscriptionListener[] listeners = this.subscriptionListeners.getData();
-		for(int i = 0, s = this.subscriptionListeners.size(); i < s; i++) {
+		for (int i = 0, s = this.subscriptionListeners.size(); i < s; i++) {
 			listeners[i].inserted(entity);
 		}
 	}
-	
+
 	protected void notifyListenersRemoved(int entity) {
 		SubscriptionListener[] listeners = this.subscriptionListeners.getData();
-		for(int i = 0, s = this.subscriptionListeners.size(); i < s; i++) {
+		for (int i = 0, s = this.subscriptionListeners.size(); i < s; i++) {
 			listeners[i].removed(entity);
 		}
 	}

@@ -88,7 +88,7 @@ public class ComponentManager {
 			ComponentMapper<T> mapper = this.getOrCreateMapper(c);
 			if (mapper.isLocked == false) {
 				mapper.isLocked = true;
-				System.out.println("The Mapper for " + c + "is Syncornized now!");
+				System.out.println("The Mapper for " + c.getSimpleName() + "is Syncornized now!");
 			}
 		}
 	}

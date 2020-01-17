@@ -80,13 +80,14 @@ public class ComponentMapper<T extends Component> {
 //	}
 
 	public T get(int entity) {
-		if (this.isLocked) {
-			synchronized (this) {
-				return this.components.safeGet(entity);
-			}
-		} else {
-			return this.components.safeGet(entity);
-		}
+		return this.components.safeGet(entity);
+//		if (this.isLocked) {
+//			synchronized (this) {
+//				return this.components.safeGet(entity);
+//			}
+//		} else {
+//			return this.components.safeGet(entity);
+//		}
 	}
 
 	/**

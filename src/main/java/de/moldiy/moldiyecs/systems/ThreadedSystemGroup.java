@@ -70,14 +70,14 @@ public class ThreadedSystemGroup extends SystemGroup {
 	 * @param iterationPerSecond
 	 */
 	public void setIterationPerSecond(int iterationPerSecond) {
-		this.sleepTimeAfterIteration = 1_000_000 / iterationPerSecond;
+		this.sleepTimeAfterIteration = (1_000_000 / iterationPerSecond);
 		if(this.sleepTimeAfterIteration <= 1000) {
 			this.sleepAfterIteration = false;
 		} else {
 			this.sleepAfterIteration = true;
 		}
-		System.out.println(this.sleepAfterIteration);
-		System.out.println(this.sleepTimeAfterIteration);
+		System.out.println("sleep after iteration: " + this.sleepAfterIteration);
+		System.out.println("nano time to sleep: " + this.sleepTimeAfterIteration);
 	}
 	
 	public boolean isGroupPaused() {

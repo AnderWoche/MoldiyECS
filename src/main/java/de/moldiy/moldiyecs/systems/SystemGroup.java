@@ -21,6 +21,9 @@ public class SystemGroup {
 	
 	private final Bag<BaseSystem> systems = new Bag<>(BaseSystem.class);
 	
+	private float timeLastFrame = -1;
+	private float deltaTime;
+	
 	/**
 	 * don't remove Systems! Read only
 	 * @return
@@ -43,14 +46,23 @@ public class SystemGroup {
 			BaseSystem system = baseSystems[i];
 			system.initialize();
 		}	
+		this.timeLastFrame = System.currentTimeMillis();
 	}
 	
 	public void process() {
+		long currentTimeMilis = System.currentTimeMillis();
+		this.deltaTime = currentTimeMilis - timeLastFrame;
+		this.timeLastFrame = currentTimeMilis;
 		BaseSystem[] baseSystems = systems.getData();
 		for(int i = 0, s = systems.size(); i < s; i++) {
 			BaseSystem system = baseSystems[i];
+			system.setDeltaTime(deltaTime);
 			system.processSystem();
 		}
+	}
+	
+	public float getDeltaTime() {
+		return this.deltaTime;
 	}
 	
 }

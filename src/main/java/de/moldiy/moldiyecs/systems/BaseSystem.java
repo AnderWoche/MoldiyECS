@@ -26,7 +26,20 @@ public abstract class BaseSystem {
 	
 	private EntityEdit entityEdit;
 	
+	private float deltaTime;
+	
 	public BaseSystem() {
+	}
+	
+	/**
+	 * package mthod for SystemGroup
+	 */
+	void setDeltaTime(float deltaTime) {
+		this.deltaTime = deltaTime;
+	}
+	
+	public float getDeltaTime() {
+		return this.deltaTime;
 	}
 	
 	public World getWorld() {
