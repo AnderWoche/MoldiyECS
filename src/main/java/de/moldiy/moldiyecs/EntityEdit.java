@@ -23,21 +23,51 @@ public class EntityEdit {
 	}
 
 	public <T extends Component> T create(int entity, Class<T> component) {
-		return this.world.getComponentManager().getMapper(component, this.group).create(entity);
+		ComponentMapper<T> componentMapper = this.world.getComponentManager().getMapper(component);
+		if (componentMapper.locked) {
+			return componentMapper.create(entity);
+		} else {
+			componentMapper.locked = true;
+			T componentObject = componentMapper.create(entity);
+			componentMapper.locked = false;
+			return componentObject;
+		}
 	}
 
 	public <T extends Component> void delete(int entity, Class<T> component) {
-		this.world.getComponentManager().getMapper(component, this.group).remove(entity);
+		ComponentMapper<T> componentMapper = this.world.getComponentManager().getMapper(component);
+		if (componentMapper.locked) {
+			componentMapper.remove(entity);
+		} else {
+			componentMapper.locked = true;
+			componentMapper.remove(entity);
+			componentMapper.locked = false;
+		}
 	}
 
 	public <T extends Component> T createComponentOnly(Class<T> component) {
-		return this.world.getComponentManager().getMapper(component, this.group).createComponentOnly();
+		ComponentMapper<T> componentMapper = this.world.getComponentManager().getMapper(component);
+		if (componentMapper.locked) {
+			return componentMapper.createComponentOnly();
+		} else {
+			componentMapper.locked = true;
+			T returnObject = componentMapper.createComponentOnly();
+			componentMapper.locked = false;
+			return returnObject;
+		}
 	}
 
 	public <T extends Component> void addComponent(int entity, T component) {
 		@SuppressWarnings("unchecked")
-		ComponentMapper<T> mapper = (ComponentMapper<T>) this.world.getComponentManager().getMapper(component.getClass(), this.group);
-		mapper.add(entity, component);
+		ComponentMapper<T> mapper = (ComponentMapper<T>) this.world.getComponentManager()
+				.getMapper(component.getClass());
+		if (mapper.locked) {
+			mapper.add(entity, component);
+		} else {
+			mapper.locked = true;
+			mapper.add(entity, component);
+			mapper.locked = false;
+		}
 	}
 
 }

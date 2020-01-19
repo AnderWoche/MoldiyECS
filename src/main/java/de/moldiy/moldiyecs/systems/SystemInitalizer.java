@@ -18,6 +18,7 @@ package de.moldiy.moldiyecs.systems;
 import de.moldiy.moldiyecs.World;
 import de.moldiy.moldiyecs.componentmanager.ComponentManager;
 import de.moldiy.moldiyecs.componentmanager.ComponentMapper;
+import de.moldiy.moldiyecs.componentmanager.ComponentMapperGetOnly;
 import de.moldiy.moldiyecs.componentmanager.Mapper;
 import de.moldiy.moldiyecs.subscription.Aspect;
 import de.moldiy.moldiyecs.utils.reflect.ClassReflection;
@@ -76,7 +77,12 @@ public class SystemInitalizer {
 					field[i].setAccessible(true);
 					field[i].set(obejct, componentManager.getMapper(mapperAnotation.value(), group));
 				}
-
+			} else if(fieldClass == ComponentMapperGetOnly.class) {
+				Mapper mapperAnotation = field[i].getAnnotation(Mapper.class);
+				if (mapperAnotation != null) {
+					field[i].setAccessible(true);
+					field[i].set(obejct, componentManager.getMapper(mapperAnotation.value()));
+				}
 			}
 		}
 	}

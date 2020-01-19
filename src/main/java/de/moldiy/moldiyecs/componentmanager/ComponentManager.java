@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import de.moldiy.moldiyecs.World;
 import de.moldiy.moldiyecs.componentmanager.ComponentMapper.ComponentListener;
 import de.moldiy.moldiyecs.systems.SystemGroup;
 import de.moldiy.moldiyecs.utils.Bag;
@@ -31,13 +32,16 @@ public class ComponentManager {
 	private final ComponentIDFactory componentIDFactory = new ComponentIDFactory();
 
 	private final Lock lock;
+	
+	private final World world;
 
 	private Bag<EntityChangedComponentIDsListener> listener = new Bag<ComponentManager.EntityChangedComponentIDsListener>(
 			EntityChangedComponentIDsListener.class);
 
 	private ComponentListener componentListener;
 
-	public ComponentManager() {
+	public ComponentManager(World world) {
+		this.world = world;
 		lock = new ReentrantLock();
 		componentListener = new ComponentListener() {
 			@Override
@@ -50,6 +54,17 @@ public class ComponentManager {
 				notifyEntityChangedComponentIDsListener_REMOVED(component, entity);
 			}
 		};
+	}
+	
+	/**
+	 * get a ComponentMapper from MainThread/MainSystemGroup
+	 * @param c the Component Class for the mapper
+	 * @return The Component Mapper
+	 */
+	public <T extends Component> ComponentMapper<T> getMapper(Class<T> c) {
+		this.registerGroupOnAMapper(c, this.world.getSystemManager().getMainSystemGroup());
+//		this.checkForMapperSynchronizion(c);
+		return this.getOrCreateMapper(c);
 	}
 
 	public <T extends Component> ComponentMapper<T> getMapper(Class<T> c, SystemGroup group) {
@@ -86,8 +101,8 @@ public class ComponentManager {
 		Bag<SystemGroup> bagGroup = this.mapperInSystemGroups.get(c);
 		if (bagGroup.size() > 1) {
 			ComponentMapper<T> mapper = this.getOrCreateMapper(c);
-			if (mapper.isLocked == false) {
-				mapper.isLocked = true;
+			if (mapper.locked == false) {
+				mapper.locked = true;
 				System.out.println("The Mapper for " + c.getSimpleName() + "is Syncornized now!");
 			}
 		}

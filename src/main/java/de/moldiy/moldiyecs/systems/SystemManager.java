@@ -99,10 +99,7 @@ public class SystemManager {
 	}
 
 	public void process() {
-		SystemGroup[] baseSystems = this.systemGroups.getData();
-		for (int i = 0, s = this.systemGroups.size(); i < s; i++) {
-			baseSystems[i].process();
-		}
+		this.mainThreadGroup.process();
 	}
 
 	public boolean isStated() {

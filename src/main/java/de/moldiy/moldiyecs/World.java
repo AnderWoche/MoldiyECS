@@ -30,7 +30,7 @@ public class World {
 
 	public World() {
 		this.entityManager = new EntityManager(128, this);
-		this.componentManager = new ComponentManager();
+		this.componentManager = new ComponentManager(this);
 		this.subscriptionManager = new SubscriptionManager(this);
 		this.systemManager = new SystemManager(this);
 		this.componentManager.addEntityChangedCompoenntIDsListener(new EntityChangedComponentIDsListener() {

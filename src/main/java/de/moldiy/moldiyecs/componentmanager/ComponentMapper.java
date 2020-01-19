@@ -21,14 +21,15 @@ import de.moldiy.moldiyecs.utils.Bag;
 import de.moldiy.moldiyecs.utils.reflect.ClassReflection;
 import de.moldiy.moldiyecs.utils.reflect.ReflectionException;
 
-public class ComponentMapper<T extends Component> {
+public class ComponentMapper<T extends Component> implements ComponentMapperGetOnly<T> {
 
 	private Class<T> componentClass;
 
 	private final Bag<T> components;
 	private final Pool<T> componentPool;
 
-	public boolean isLocked = false;
+	public boolean locked = false;
+
 //	private Thread exclusiceAccess = null;
 //	private final Lock lock;
 //	private final Condition condition;
@@ -37,10 +38,10 @@ public class ComponentMapper<T extends Component> {
 			ComponentListener.class);
 
 	public ComponentMapper(final Class<T> componentClass) {
+//		this.lock = new ReentrantLock();
+//		this.condition = this.lock.newCondition();
 		this.componentClass = componentClass;
 		components = new Bag<T>();
-//		this.lock = new ReentrantLock();
-//		this.condition = lock.newCondition();
 		this.componentPool = new Pool<T>() {
 			@Override
 			protected T newObject() {
@@ -68,26 +69,20 @@ public class ComponentMapper<T extends Component> {
 //				e.printStackTrace();
 //			}
 //			this.lock.unlock();
-//			// exclusiceAccess();
+//			this.exclusiceAccess = Thread.currentThread();
 //		}
 //	}
 //
 //	public void publicAccess() {
 //		this.lock.lock();
 //		this.exclusiceAccess = null;
-//		this.condition.signalAll();
+//		this.condition.signal();
 //		this.lock.unlock();
 //	}
 
+	@Override
 	public T get(int entity) {
 		return this.components.safeGet(entity);
-//		if (this.isLocked) {
-//			synchronized (this) {
-//				return this.components.safeGet(entity);
-//			}
-//		} else {
-//			return this.components.safeGet(entity);
-//		}
 	}
 
 	/**
@@ -106,14 +101,7 @@ public class ComponentMapper<T extends Component> {
 	public void remove(int entityID) {
 		T component = this.get(entityID);
 		if (component != null) {
-			/**
-			 * Delayed removable Implementation!!!!! JETZT ehmm nö!!.. es egal wann die
-			 * removed werden weil ja alles paralel ist Der sugrif auf mapper ist bei
-			 * critischen sachen sowieso Sync! LÖSUNG: ein bitVecot der alle enitty markiert
-			 * die verändert worden sind und befor ein system anfängt zu arbeiten und die
-			 * mapper Synct werden die Subscriptions Aktualieiert mit den BitVEctor!?
-			 */
-			if (this.isLocked) {
+			if (this.locked) {
 				synchronized (this) {
 					this.notifyComponentListener_EntityDeleted(entityID);
 					this.components.unsafeSet(entityID, null);
@@ -131,7 +119,7 @@ public class ComponentMapper<T extends Component> {
 	public T create(int entityID) {
 		T component = this.get(entityID);
 		if (component == null) {
-			if(this.isLocked) {
+			if (this.locked) {
 				synchronized (this) {
 					component = this.componentPool.obtain();
 					this.components.set(entityID, component);
@@ -145,9 +133,9 @@ public class ComponentMapper<T extends Component> {
 		}
 		return component;
 	}
-	
+
 	public T createComponentOnly() {
-		if(this.isLocked) {
+		if (this.locked) {
 			synchronized (this) {
 				return this.componentPool.obtain();
 			}
@@ -155,9 +143,9 @@ public class ComponentMapper<T extends Component> {
 			return this.componentPool.obtain();
 		}
 	}
-	
+
 	public void add(int entityID, T component) {
-		if(this.isLocked) {
+		if (this.locked) {
 			synchronized (this) {
 				this.components.set(entityID, component);
 				this.notifyComponentListener_EntityAdded(entityID);
@@ -185,7 +173,7 @@ public class ComponentMapper<T extends Component> {
 			listneners[i].componentAdded(this.componentClass, entity);
 		}
 	}
-
+	
 	public interface ComponentListener {
 		public void componentDeleteted(Class<? extends Component> component, int entity);
 
