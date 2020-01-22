@@ -53,11 +53,11 @@ public class EntityManager {
 		return !recycled.unsafeGet(entityId);
 	}
 
-	public BitVector getComponentIDs(int entity) {
+	public synchronized BitVector getComponentIDs(int entity) {
 		return this.componentIDFromEntitys.get(entity);
 	}
 
-	public void deleteAndFreeEntitys(int entity) {
+	public synchronized void deleteAndFreeEntitys(int entity) {
 			// usually never happens but:
 			// this happens when an entity is deleted before
 			// it is added to the world, ie; created and deleted
@@ -115,7 +115,7 @@ public class EntityManager {
 		}
 	}
 
-	private Entity obtain() {
+	private synchronized Entity obtain() {
 		if (limbo.isEmpty()) {
 			return createEntity(nextId++);
 		} else {
@@ -125,7 +125,7 @@ public class EntityManager {
 		}
 	}
 
-	private void free(int entityId) {
+	private synchronized void free(int entityId) {
 		limbo.add(entityId);
 		recycled.unsafeSet(entityId);
 	}

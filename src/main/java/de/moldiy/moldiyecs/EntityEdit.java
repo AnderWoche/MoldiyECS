@@ -24,35 +24,37 @@ public class EntityEdit {
 
 	public <T extends Component> T create(int entity, Class<T> component) {
 		ComponentMapper<T> componentMapper = this.world.getComponentManager().getMapper(component);
-		if (componentMapper.locked) {
-			return componentMapper.create(entity);
+		
+		T componentObject;
+		if (componentMapper.isSynchronized()) {
+			componentObject = componentMapper.create(entity);
 		} else {
-			componentMapper.locked = true;
-			T componentObject = componentMapper.create(entity);
-			componentMapper.locked = false;
-			return componentObject;
+			componentMapper.setSynchronized(true);
+			componentObject = componentMapper.create(entity);
+			componentMapper.setSynchronized(false);
 		}
+		return componentObject;
 	}
 
 	public <T extends Component> void delete(int entity, Class<T> component) {
 		ComponentMapper<T> componentMapper = this.world.getComponentManager().getMapper(component);
-		if (componentMapper.locked) {
+		if (componentMapper.isSynchronized()) {
 			componentMapper.remove(entity);
 		} else {
-			componentMapper.locked = true;
+			componentMapper.setSynchronized(true);
 			componentMapper.remove(entity);
-			componentMapper.locked = false;
+			componentMapper.setSynchronized(false);
 		}
 	}
 
 	public <T extends Component> T createComponentOnly(Class<T> component) {
 		ComponentMapper<T> componentMapper = this.world.getComponentManager().getMapper(component);
-		if (componentMapper.locked) {
+		if (componentMapper.isSynchronized()) {
 			return componentMapper.createComponentOnly();
 		} else {
-			componentMapper.locked = true;
+			componentMapper.setSynchronized(true);
 			T returnObject = componentMapper.createComponentOnly();
-			componentMapper.locked = false;
+			componentMapper.setSynchronized(false);
 			return returnObject;
 		}
 	}
@@ -61,12 +63,12 @@ public class EntityEdit {
 		@SuppressWarnings("unchecked")
 		ComponentMapper<T> mapper = (ComponentMapper<T>) this.world.getComponentManager()
 				.getMapper(component.getClass());
-		if (mapper.locked) {
+		if (mapper.isSynchronized()) {
 			mapper.add(entity, component);
 		} else {
-			mapper.locked = true;
+			mapper.setSynchronized(true);
 			mapper.add(entity, component);
-			mapper.locked = false;
+			mapper.setSynchronized(false);
 		}
 	}
 

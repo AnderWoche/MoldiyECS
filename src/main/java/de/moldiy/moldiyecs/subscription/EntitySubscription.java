@@ -25,7 +25,7 @@ public class EntitySubscription {
 
 	private final BitVector entities = new BitVector();
 	private final IntBag entitiesForIteration = new IntBag();
-
+	
 	private final Bag<SubscriptionListener> subscriptionListeners = new Bag<EntitySubscription.SubscriptionListener>(
 			SubscriptionListener.class);
 
@@ -34,7 +34,6 @@ public class EntitySubscription {
 	}
 
 	public void entityComponentsChanged(int entity, BitVector compoentIDs) {
-		synchronized (entities) {
 			if (aspect.isInterested(compoentIDs)) {
 				if (entities.unsafeGet(entity) == false) {
 					entities.unsafeSet(entity);
@@ -46,7 +45,6 @@ public class EntitySubscription {
 					this.notifyListenersRemoved(entity);
 				}
 			}
-		}
 	}
 
 	/**
@@ -60,19 +58,6 @@ public class EntitySubscription {
 	 */
 	public IntBag updateEntityBag() {
 		this.entities.toIntBag(this.entitiesForIteration);
-		return this.getEntities();
-	}
-
-	/**
-	 * check the entitys and update.(Remove/Add entities)
-	 * 
-	 * @return IntBag this the entitys with the Subscrpipted Compoennts (Only read
-	 *         don't remove from intbag)
-	 */
-	public IntBag updateEntityBagWithLock() {
-		synchronized (entities) {
-			this.entities.toIntBag(this.entitiesForIteration);
-		}
 		return this.getEntities();
 	}
 

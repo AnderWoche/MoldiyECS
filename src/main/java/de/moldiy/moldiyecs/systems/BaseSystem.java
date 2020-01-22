@@ -13,54 +13,81 @@ package de.moldiy.moldiyecs.systems;
 
 import de.moldiy.moldiyecs.EntityEdit;
 import de.moldiy.moldiyecs.World;
+import de.moldiy.moldiyecs.componentmanager.Component;
+import de.moldiy.moldiyecs.componentmanager.ComponentMapper;
+import de.moldiy.moldiyecs.utils.Bag;
 
 public abstract class BaseSystem {
-	
+
 	/**
-	 * Gettet init in SystemManager with the SystemInitalizer class
-	 * it's happens with reflection
+	 * Gettet init in SystemManager with the SystemInitalizer class it's happens
+	 * with reflection
 	 */
 	private World world;
-	
+
 	private SystemGroup group;
-	
+
 	private EntityEdit entityEdit;
-	
+
+	private Bag<ComponentMapper<?>> mappers = new Bag<ComponentMapper<?>>();
+
 	private float deltaTime;
-	
+
 	public BaseSystem() {
 	}
-	
+
 	/**
 	 * package mthod for SystemGroup
 	 */
 	void setDeltaTime(float deltaTime) {
 		this.deltaTime = deltaTime;
 	}
-	
+
 	public float getDeltaTime() {
 		return this.deltaTime;
 	}
-	
+
 	public World getWorld() {
 		return world;
 	}
-	
+
 	public SystemGroup getGroup() {
 		return this.group;
 	}
-	
+
+	public Bag<ComponentMapper<? extends Component>> getComponentMapper() {
+		return this.mappers;
+	}
+
 	protected void initialize() {
 		this.entityEdit = new EntityEdit(this.world, this.group);
 	}
-	
+
 	public EntityEdit getEntityEdit() {
 		return this.entityEdit;
 	}
-	
-	public abstract void processSystem();
-	
-	public void dispose() {}
-	
-	
+
+	void process() {
+		if (checkProcessing()) {
+			for (int i = 0, s = this.mappers.size(); i < s; i++) {
+				this.mappers.get(i).callListener();
+			}
+			this.processSystem();
+			for (int i = 0, s = this.mappers.size(); i < s; i++) {
+				ComponentMapper<?> mapper = this.mappers.get(i);
+				if (mapper.isSynchronized())
+					mapper.publicAccess();
+			}
+		}
+	}
+
+	protected boolean checkProcessing() {
+		return true;
+	}
+
+	protected abstract void processSystem();
+
+	public void dispose() {
+	}
+
 }

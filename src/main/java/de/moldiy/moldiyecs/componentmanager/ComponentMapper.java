@@ -15,9 +15,14 @@ limitations under the License.
  */
 package de.moldiy.moldiyecs.componentmanager;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.badlogic.gdx.utils.Pool;
 
 import de.moldiy.moldiyecs.utils.Bag;
+import de.moldiy.moldiyecs.utils.IntBag;
 import de.moldiy.moldiyecs.utils.reflect.ClassReflection;
 import de.moldiy.moldiyecs.utils.reflect.ReflectionException;
 
@@ -28,18 +33,18 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 	private final Bag<T> components;
 	private final Pool<T> componentPool;
 
-	public boolean locked = false;
+	private final IntBag entitiesRemoved = new IntBag();
+	private final IntBag entitiesAdded = new IntBag();
 
-//	private Thread exclusiceAccess = null;
-//	private final Lock lock;
-//	private final Condition condition;
+	private boolean isSynchronized = false;
+	private Thread exclusiceAccess = null;
+	private final Lock lock = new ReentrantLock();
+	private final Condition condition = lock.newCondition();
 
 	private final Bag<ComponentListener> componentListener = new Bag<ComponentMapper.ComponentListener>(
 			ComponentListener.class);
 
 	public ComponentMapper(final Class<T> componentClass) {
-//		this.lock = new ReentrantLock();
-//		this.condition = this.lock.newCondition();
 		this.componentClass = componentClass;
 		components = new Bag<T>();
 		this.componentPool = new Pool<T>() {
@@ -58,102 +63,110 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 	/**
 	 * Don't forget after the exclusice operation unlock the public access.
 	 */
-//	public void exclusiceAccess() {
-//		if (this.exclusiceAccess == null) {
-//			this.exclusiceAccess = Thread.currentThread();
-//		} else {
-//			this.lock.lock();
-//			try {
-//				this.condition.await();
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//			this.lock.unlock();
-//			this.exclusiceAccess = Thread.currentThread();
-//		}
-//	}
-//
-//	public void publicAccess() {
-//		this.lock.lock();
-//		this.exclusiceAccess = null;
-//		this.condition.signal();
-//		this.lock.unlock();
-//	}
+	public synchronized void exclusiceAccess() {
+		this.lock.lock();
+		if (this.exclusiceAccess == null) {
+			this.exclusiceAccess = Thread.currentThread();
+		} else if (this.exclusiceAccess != Thread.currentThread()) {
+			try {
+				this.condition.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.exclusiceAccess = Thread.currentThread();
+		}
+		this.lock.unlock();
+	}
+
+	public synchronized void publicAccess() {
+		this.lock.lock();
+		this.exclusiceAccess = null;
+		this.condition.signal();
+		this.lock.unlock();
+	}
 
 	@Override
 	public T get(int entity) {
 		return this.components.safeGet(entity);
 	}
 
+	public void callListener() {
+		if (this.isSynchronized())
+			exclusiceAccess();
+//		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
+//			throw new RuntimeErrorException(null, "Pls report this exeption!!");
+//		}
+		int[] dataRemoved = this.entitiesRemoved.getData();
+		for (int i = 0, s = this.entitiesRemoved.size(); i < s; i++) {
+			this.notifyComponentListener_EntityDeleted(dataRemoved[i]);
+		}
+		int[] dataAdded = this.entitiesAdded.getData();
+		for (int i = 0, s = this.entitiesAdded.size(); i < s; i++) {
+			this.notifyComponentListener_EntityAdded(dataAdded[i]);
+		}
+		this.entitiesRemoved.clear();
+		this.entitiesAdded.clear();
+	}
+
 	/**
-	 * GEHÖER NCIHT ZU MEHTODE NUT IDEE NOTOIZ
-	 * 
-	 * wen erkannt wird das an diesem mapper mehr als 2 Systeme Interesiert sind
-	 * wird automatisch sobal die methode REMOVE oder CREATE aufgerufen wird der
-	 * mapper nur exclusive nur für diesen thread freigegeben ohne das der benutzer
-	 * dieses Frame works was merkt. damit aber am ende der mapper wieder für alle
-	 * freigeschaltet wrid wird immer IMMER am system ende automatisch the
-	 * PUBLICACCESS methode aufgerufen soweit ich weis goibt es keine exeption wenn
-	 * man notifi aufruft obwohl niemand wartet.
 	 * 
 	 * @param entityID
 	 */
 	public void remove(int entityID) {
+		if (this.isSynchronized())
+			exclusiceAccess();
+//		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
+//			throw new RuntimeErrorException(null, "Pls report this exeption!!");
+//		}
 		T component = this.get(entityID);
 		if (component != null) {
-			if (this.locked) {
-				synchronized (this) {
-					this.notifyComponentListener_EntityDeleted(entityID);
-					this.components.unsafeSet(entityID, null);
-					this.componentPool.free(component);
-				}
-			} else {
-				this.notifyComponentListener_EntityDeleted(entityID);
-				this.components.unsafeSet(entityID, null);
-				this.componentPool.free(component);
-			}
+			this.entitiesRemoved.add(entityID);
+			this.components.unsafeSet(entityID, null);
+			this.componentPool.free(component);
 		}
 
 	}
 
 	public T create(int entityID) {
+		if (this.isSynchronized())
+			exclusiceAccess();
+//		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
+//			throw new RuntimeErrorException(null, "Pls report this exeption!!");
+//		}
 		T component = this.get(entityID);
 		if (component == null) {
-			if (this.locked) {
-				synchronized (this) {
-					component = this.componentPool.obtain();
-					this.components.set(entityID, component);
-					this.notifyComponentListener_EntityAdded(entityID);
-				}
-			} else {
-				component = this.componentPool.obtain();
-				this.components.set(entityID, component);
-				this.notifyComponentListener_EntityAdded(entityID);
-			}
+			component = this.componentPool.obtain();
+			this.components.set(entityID, component);
+			this.entitiesAdded.add(entityID);
 		}
 		return component;
 	}
 
 	public T createComponentOnly() {
-		if (this.locked) {
-			synchronized (this) {
-				return this.componentPool.obtain();
-			}
-		} else {
-			return this.componentPool.obtain();
-		}
+		if (this.isSynchronized())
+			exclusiceAccess();
+//		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
+//			throw new RuntimeErrorException(null, "Pls report this exeption!!");
+//		}
+		return this.componentPool.obtain();
 	}
 
 	public void add(int entityID, T component) {
-		if (this.locked) {
-			synchronized (this) {
-				this.components.set(entityID, component);
-				this.notifyComponentListener_EntityAdded(entityID);
-			}
-		} else {
-			this.components.set(entityID, component);
-			this.notifyComponentListener_EntityAdded(entityID);
-		}
+		if (this.isSynchronized())
+			exclusiceAccess();
+//		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
+//			throw new RuntimeErrorException(null, "Pls report this exeption!!");
+//		}
+		this.components.set(entityID, component);
+		this.notifyComponentListener_EntityAdded(entityID);
+	}
+
+	public void setSynchronized(boolean syncronized) {
+		this.isSynchronized = syncronized;
+	}
+
+	public boolean isSynchronized() {
+		return this.isSynchronized;
 	}
 
 	public void addComponentListener(ComponentListener componentListener) {
@@ -173,7 +186,7 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 			listneners[i].componentAdded(this.componentClass, entity);
 		}
 	}
-	
+
 	public interface ComponentListener {
 		public void componentDeleteted(Class<? extends Component> component, int entity);
 

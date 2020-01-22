@@ -25,6 +25,18 @@ import de.moldiy.moldiyecs.systems.SystemGroup;
 import de.moldiy.moldiyecs.utils.Bag;
 
 public class ComponentManager {
+	
+	/**
+	 * 
+	 * Ein eigendes System CompoenntManager extends Base System oder so
+	 * 
+	 * weil die mapper regelmäsgig geupdated werden mussen 
+	 * 
+	 * hrgentiwe muss das passiren
+	 * 
+	 * 
+	 */
+	
 
 	private final Bag<ComponentMapper<? extends Component>> mappers = new Bag<ComponentMapper<? extends Component>>();
 	private final HashMap<Class<? extends Component>, Bag<SystemGroup>> mapperInSystemGroups = new HashMap<>();
@@ -101,8 +113,8 @@ public class ComponentManager {
 		Bag<SystemGroup> bagGroup = this.mapperInSystemGroups.get(c);
 		if (bagGroup.size() > 1) {
 			ComponentMapper<T> mapper = this.getOrCreateMapper(c);
-			if (mapper.locked == false) {
-				mapper.locked = true;
+			if (mapper.isSynchronized() == false) {
+				mapper.setSynchronized(true);
 				System.out.println("The Mapper for " + c.getSimpleName() + "is Syncornized now!");
 			}
 		}

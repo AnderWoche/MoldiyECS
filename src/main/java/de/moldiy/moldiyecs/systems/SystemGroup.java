@@ -56,7 +56,7 @@ public class SystemGroup {
 			BaseSystem system = baseSystems[i];
 			float delta = (newTime - oldTime) / 1000F;
 			system.setDeltaTime(delta);
-			system.processSystem();
+			system.process();
 		}
 	}
 	

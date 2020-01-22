@@ -19,8 +19,8 @@ import de.moldiy.moldiyecs.subscription.EntitySubscription;
 import de.moldiy.moldiyecs.utils.IntBag;
 
 /**
- * This system manage Automaticly Critical code and Syncronized when need
- * - The Entity Subscription getting Automatiocly sycronized if need.
+ * This system manage Automaticly Critical code and Syncronized when need - The
+ * Entity Subscription getting Automatiocly sycronized if need.
  * 
  * @author Moldiy
  *
@@ -31,21 +31,15 @@ public abstract class IteratingSystem extends BaseSystem {
 
 	@Override
 	public void processSystem() {
-		IntBag entityIDs = subscription.updateEntityBagWithLock();
+		IntBag entityIDs = subscription.updateEntityBag();
 		int[] entities = entityIDs.getData();
 		for (int i = 0, s = entityIDs.size(); i < s; i++) {
-//			for (int mapperID = 0, syncMapperSize = synchronizedMapper.size(); mapperID < syncMapperSize; mapperID++) {
-//				synchronizedMapper.get(mapperID).exclusiceAccess();
-//			}
 			this.processEntity(entities[i]);
-//			for (int mapperID = 0, syncMapperSize = synchronizedMapper.size(); mapperID < syncMapperSize; mapperID++) {
-//				synchronizedMapper.get(mapperID).publicAccess();
-//			}
 		}
 	}
 
 	public abstract void processEntity(int entity);
-	
+
 	protected EntitySubscription getSubscription() {
 		return this.subscription;
 	}

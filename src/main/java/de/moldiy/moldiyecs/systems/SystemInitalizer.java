@@ -16,11 +16,13 @@ limitations under the License.
 package de.moldiy.moldiyecs.systems;
 
 import de.moldiy.moldiyecs.World;
+import de.moldiy.moldiyecs.componentmanager.Component;
 import de.moldiy.moldiyecs.componentmanager.ComponentManager;
 import de.moldiy.moldiyecs.componentmanager.ComponentMapper;
 import de.moldiy.moldiyecs.componentmanager.ComponentMapperGetOnly;
 import de.moldiy.moldiyecs.componentmanager.Mapper;
 import de.moldiy.moldiyecs.subscription.Aspect;
+import de.moldiy.moldiyecs.utils.Bag;
 import de.moldiy.moldiyecs.utils.reflect.ClassReflection;
 import de.moldiy.moldiyecs.utils.reflect.Field;
 import de.moldiy.moldiyecs.utils.reflect.ReflectionException;
@@ -61,27 +63,45 @@ public class SystemInitalizer {
 				superClass = superClass.getSuperclass();
 			} else
 				break;
-
 		}
-
 	}
 
-	public static <T extends Object> void initMapper(T obejct, SystemGroup group,
+	public static <T> void initMapper(T system, SystemGroup group,
 			ComponentManager componentManager) throws ReflectionException {
-		Field[] field = ClassReflection.getDeclaredFields(obejct.getClass());
+		
+		Class<?> baseSystem = system.getClass();
+		while (true) {
+			if (baseSystem != null) {
+				if (baseSystem == BaseSystem.class) {
+					break;
+				}
+				baseSystem = baseSystem.getSuperclass();
+			} else
+				break;
+		}
+		
+		Field[] field = ClassReflection.getDeclaredFields(system.getClass());
 		for (int i = 0, s = field.length; i < s; i++) {
 			Class<?> fieldClass = field[i].getType();
 			if (fieldClass == ComponentMapper.class) {
 				Mapper mapperAnotation = field[i].getAnnotation(Mapper.class);
 				if (mapperAnotation != null) {
 					field[i].setAccessible(true);
-					field[i].set(obejct, componentManager.getMapper(mapperAnotation.value(), group));
+					ComponentMapper<?> mapper = componentManager.getMapper(mapperAnotation.value(), group);
+					field[i].set(system, mapper);
+					if(baseSystem != null) {
+						Field groupField = ClassReflection.getDeclaredField(baseSystem, "mappers");
+						groupField.setAccessible(true);
+						@SuppressWarnings("unchecked")
+						Bag<ComponentMapper<? extends Component>> mappers = (Bag<ComponentMapper<? extends Component>>) groupField.get(system);
+						mappers.add(mapper);
+					}
 				}
 			} else if(fieldClass == ComponentMapperGetOnly.class) {
 				Mapper mapperAnotation = field[i].getAnnotation(Mapper.class);
 				if (mapperAnotation != null) {
 					field[i].setAccessible(true);
-					field[i].set(obejct, componentManager.getMapper(mapperAnotation.value()));
+					field[i].set(system, componentManager.getMapper(mapperAnotation.value()));
 				}
 			}
 		}
