@@ -75,7 +75,7 @@ public abstract class BaseSystem {
 			this.processSystem();
 			for (int i = 0, s = this.mappers.size(); i < s; i++) {
 				ComponentMapper<?> mapper = this.mappers.get(i);
-				if (mapper.isSynchronized())
+//				if (mapper.isSynchronized())
 					mapper.publicAccess();
 			}
 		}
