@@ -57,7 +57,7 @@ public class ComponentMapperTest {
 		@Override
 		public void processSystem() {
 //			System.out.println("Thread = " + Thread.currentThread());
-			transformM.callListener();
+//			transformM.callListener();
 
 			for (int i = 0; i < 100; i++) {
 				transformM.remove(i);
@@ -72,7 +72,7 @@ public class ComponentMapperTest {
 
 			super.processSystem();
 //			System.out.println("Thread FERTIG: " + Thread.currentThread());
-			transformM.publicAccess();
+//			transformM.publicAccess();
 		}
 
 		@Override

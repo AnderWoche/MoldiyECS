@@ -31,10 +31,10 @@ public class EntityEdit {
 		} else {
 			componentMapper.setSynchronized(true);
 			componentObject = componentMapper.create(entity);
-			componentMapper.callListener();
+//			componentMapper.callListener();
 			componentMapper.setSynchronized(false);
 		}
-		componentMapper.publicAccess();
+//		componentMapper.publicAccess();
 		return componentObject;
 	}
 
@@ -45,10 +45,10 @@ public class EntityEdit {
 		} else {
 			componentMapper.setSynchronized(true);
 			componentMapper.remove(entity);
-			componentMapper.callListener();
+//			componentMapper.callListener();
 			componentMapper.setSynchronized(false);
 		}
-		componentMapper.publicAccess();
+//		componentMapper.publicAccess();
 	}
 
 	public <T extends Component> T createComponentOnly(Class<T> component) {
@@ -62,7 +62,7 @@ public class EntityEdit {
 			componentMapper.setSynchronized(false);
 			returnComponent = returnObject;
 		}
-		componentMapper.publicAccess();
+//		componentMapper.publicAccess();
 		return returnComponent;
 	}
 
@@ -72,14 +72,14 @@ public class EntityEdit {
 				.getMapper(component.getClass());
 		if (mapper.isSynchronized()) {
 			mapper.add(entity, component);
-			mapper.callListener();
-			mapper.publicAccess();
+//			mapper.callListener();
+//			mapper.publicAccess();
 		} else {
 			mapper.setSynchronized(true);
 			mapper.add(entity, component);
-			mapper.callListener();
+//			mapper.callListener();
 			mapper.setSynchronized(false);
-			mapper.publicAccess();
+//			mapper.publicAccess();
 		}
 	}
 

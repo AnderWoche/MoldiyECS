@@ -42,7 +42,7 @@ public class SystemInitalizer {
 					groupField.setAccessible(true);
 					groupField.set(system, group);
 				}
-				if (superClass == IteratingSystem.class) {
+				if (superClass == IteratingSystem.class || superClass == ThreadedIteratingSystem.class) {
 					Aspect.Builder aspectBuilder = new Aspect.Builder();
 					if (system.getClass().isAnnotationPresent(All.class)) {
 						All all = system.getClass().getAnnotation(All.class);

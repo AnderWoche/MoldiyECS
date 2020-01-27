@@ -33,13 +33,13 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 	private final Bag<T> components;
 	private final Pool<T> componentPool;
 
-	private final IntBag entitiesRemoved = new IntBag();
-	private final IntBag entitiesAdded = new IntBag();
+//	private final IntBag entitiesRemoved = new IntBag();
+//	private final IntBag entitiesAdded = new IntBag();
 
 	private boolean isSynchronized = false;
-	private Thread exclusiceAccess = null;
-	private final Lock lock = new ReentrantLock();
-	private final Condition condition = lock.newCondition();
+//	private Thread exclusiceAccess = null;
+//	private final Lock lock = new ReentrantLock();
+//	private final Condition condition = lock.newCondition();
 
 	private final Bag<ComponentListener> componentListener = new Bag<ComponentMapper.ComponentListener>(
 			ComponentListener.class);
@@ -63,34 +63,34 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 	/**
 	 * Don't forget after the exclusice operation unlock the public access.
 	 */
-	public synchronized void exclusiceAccess() {
-		this.lock.lock();
-		if (this.exclusiceAccess == null) {
-			this.exclusiceAccess = Thread.currentThread();
-		} else if (this.exclusiceAccess != Thread.currentThread()) {
-			try {
-				this.condition.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			this.exclusiceAccess = Thread.currentThread();
-		}
-		this.lock.unlock();
-	}
-
-	public synchronized void publicAccess() {
-		this.lock.lock();
-		this.exclusiceAccess = null;
-		this.condition.signal();
-		this.lock.unlock();
-	}
+//	public synchronized void exclusiceAccess() {
+//		this.lock.lock();
+//		if (this.exclusiceAccess == null) {
+//			this.exclusiceAccess = Thread.currentThread();
+//		} else if (this.exclusiceAccess != Thread.currentThread()) {
+//			try {
+//				this.condition.await();
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//			this.exclusiceAccess = Thread.currentThread();
+//		}
+//		this.lock.unlock();
+//	}
+//
+//	public synchronized void publicAccess() {
+//		this.lock.lock();
+//		this.exclusiceAccess = null;
+//		this.condition.signal();
+//		this.lock.unlock();
+//	}
 
 	@Override
 	public T get(int entity) {
 		return this.components.safeGet(entity);
 	}
 
-	public void callListener() {
+//	public void callListener() {
 //		if (this.isSynchronized())
 //			exclusiceAccess();
 ////		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
@@ -106,15 +106,15 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 //		}
 //		this.entitiesRemoved.clear();
 //		this.entitiesAdded.clear();
-	}
+//	}
 
 	/**
 	 * 
 	 * @param entityID
 	 */
 	public void remove(int entityID) {
-		if (this.isSynchronized())
-			exclusiceAccess();
+//		if (this.isSynchronized())
+//			exclusiceAccess();
 //		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
 //			throw new RuntimeErrorException(null, "Pls report this exeption!!");
 //		}
@@ -129,8 +129,8 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 	}
 
 	public T create(int entityID) {
-		if (this.isSynchronized())
-			exclusiceAccess();
+//		if (this.isSynchronized())
+//			exclusiceAccess();
 //		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
 //			throw new RuntimeErrorException(null, "Pls report this exeption!!");
 //		}
@@ -145,8 +145,8 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 	}
 
 	public T createComponentOnly() {
-		if (this.isSynchronized())
-			exclusiceAccess();
+//		if (this.isSynchronized())
+//			exclusiceAccess();
 //		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
 //			throw new RuntimeErrorException(null, "Pls report this exeption!!");
 //		}
@@ -154,8 +154,8 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 	}
 
 	public void add(int entityID, T component) {
-		if (this.isSynchronized())
-			exclusiceAccess();
+//		if (this.isSynchronized())
+//			exclusiceAccess();
 //		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
 //			throw new RuntimeErrorException(null, "Pls report this exeption!!");
 //		}
