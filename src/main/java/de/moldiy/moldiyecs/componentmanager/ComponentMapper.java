@@ -91,21 +91,21 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 	}
 
 	public void callListener() {
-		if (this.isSynchronized())
-			exclusiceAccess();
-//		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
-//			throw new RuntimeErrorException(null, "Pls report this exeption!!");
+//		if (this.isSynchronized())
+//			exclusiceAccess();
+////		if (this.exclusiceAccess != null && this.exclusiceAccess != Thread.currentThread()) {
+////			throw new RuntimeErrorException(null, "Pls report this exeption!!");
+////		}
+//		int[] dataRemoved = this.entitiesRemoved.getData();
+//		for (int i = 0, s = this.entitiesRemoved.size(); i < s; i++) {
+//			this.notifyComponentListener_EntityDeleted(dataRemoved[i]);
 //		}
-		int[] dataRemoved = this.entitiesRemoved.getData();
-		for (int i = 0, s = this.entitiesRemoved.size(); i < s; i++) {
-			this.notifyComponentListener_EntityDeleted(dataRemoved[i]);
-		}
-		int[] dataAdded = this.entitiesAdded.getData();
-		for (int i = 0, s = this.entitiesAdded.size(); i < s; i++) {
-			this.notifyComponentListener_EntityAdded(dataAdded[i]);
-		}
-		this.entitiesRemoved.clear();
-		this.entitiesAdded.clear();
+//		int[] dataAdded = this.entitiesAdded.getData();
+//		for (int i = 0, s = this.entitiesAdded.size(); i < s; i++) {
+//			this.notifyComponentListener_EntityAdded(dataAdded[i]);
+//		}
+//		this.entitiesRemoved.clear();
+//		this.entitiesAdded.clear();
 	}
 
 	/**
@@ -120,7 +120,8 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 //		}
 		T component = this.get(entityID);
 		if (component != null) {
-			this.entitiesRemoved.add(entityID);
+//			this.entitiesRemoved.add(entityID);
+			this.notifyComponentListener_EntityDeleted(entityID);
 			this.components.unsafeSet(entityID, null);
 			this.componentPool.free(component);
 		}
@@ -137,7 +138,8 @@ public class ComponentMapper<T extends Component> implements ComponentMapperGetO
 		if (component == null) {
 			component = this.componentPool.obtain();
 			this.components.set(entityID, component);
-			this.entitiesAdded.add(entityID);
+//			this.entitiesAdded.add(entityID);
+			this.notifyComponentListener_EntityAdded(entityID);
 		}
 		return component;
 	}

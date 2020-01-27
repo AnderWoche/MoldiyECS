@@ -69,9 +69,9 @@ public abstract class BaseSystem {
 
 	void process() {
 		if (checkProcessing()) {
-			for (int i = 0, s = this.mappers.size(); i < s; i++) {
-				this.mappers.get(i).callListener();
-			}
+//			for (int i = 0, s = this.mappers.size(); i < s; i++) {
+//				this.mappers.get(i).callListener();
+//			}
 			this.processSystem();
 			for (int i = 0, s = this.mappers.size(); i < s; i++) {
 				ComponentMapper<?> mapper = this.mappers.get(i);
